@@ -15,7 +15,14 @@ const API = (() => {
     if (body) opts.body = isFormData ? body : JSON.stringify(body);
     try {
       const res = await fetch(`${BASE}${path}`, opts);
-      const data = await res.json();
+      let data;
+      const contentType = res.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        data = { message: text || `HTTP ${res.status}: ${res.statusText}` };
+      }
       if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`);
       return data;
     } catch (err) {
