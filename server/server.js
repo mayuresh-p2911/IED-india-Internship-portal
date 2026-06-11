@@ -21,9 +21,21 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Static file serving (uploads & client)
-app.get('/uploads/*', (req, res) => {
+app.get('/uploads/*', async (req, res) => {
   const relativePath = req.params[0];
   const filename = path.basename(relativePath);
+  
+  try {
+    const Upload = require('./models/Upload');
+    const dbFile = await Upload.findOne({ filename });
+    if (dbFile) {
+      res.set('Content-Type', dbFile.contentType);
+      return res.send(dbFile.data);
+    }
+  } catch (dbErr) {
+    console.warn(`[WARN] Failed to retrieve file from MongoDB: ${dbErr.message}`);
+  }
+
   const isVercel = process.env.VERCEL || process.env.NODE_ENV === 'production';
   
   if (isVercel) {

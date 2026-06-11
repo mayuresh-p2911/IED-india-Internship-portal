@@ -18,11 +18,13 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
+const { persistUploads } = require('../middleware/upload.middleware');
+
 router.get('/', protect, getTasks);
 router.post('/', protect, authorize('admin', 'hr', 'mentor'), createTask);
 router.get('/:id', protect, getTask);
 router.put('/:id', protect, authorize('admin', 'hr', 'mentor'), updateTask);
-router.patch('/:id/submit', protect, authorize('intern'), upload.single('submissionFile'), submitTask);
+router.patch('/:id/submit', protect, authorize('intern'), upload.single('submissionFile'), persistUploads, submitTask);
 router.patch('/:id/review', protect, authorize('admin', 'hr', 'mentor'), reviewTask);
 router.delete('/:id', protect, authorize('admin', 'mentor'), deleteTask);
 

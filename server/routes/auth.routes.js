@@ -17,11 +17,13 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
+const { persistUploads } = require('../middleware/upload.middleware');
+
 router.post('/register', register);
 router.post('/login', login);
 router.get('/me', protect, getMe);
 router.put('/password', protect, updatePassword);
-router.put('/profile', protect, upload.single('photo'), updateProfile);
+router.put('/profile', protect, upload.single('photo'), persistUploads, updateProfile);
 
 module.exports = router;
 

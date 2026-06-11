@@ -18,6 +18,8 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
 
+const { persistUploads } = require('../middleware/upload.middleware');
+
 router.get('/', protect, authorize('admin', 'hr'), getOnboarding);
 router.get('/me', protect, authorize('intern'), getMyOnboarding);
 router.get('/:id', protect, getOnboardingById);
@@ -25,6 +27,6 @@ router.put('/:id', protect, upload.fields([
   { name: 'agreement', maxCount: 1 }, { name: 'documents.resume', maxCount: 1 },
   { name: 'documents.aadhaar', maxCount: 1 }, { name: 'documents.collegeId', maxCount: 1 },
   { name: 'documents.photo', maxCount: 1 }
-]), updateOnboarding);
+]), persistUploads, updateOnboarding);
 
 module.exports = router;

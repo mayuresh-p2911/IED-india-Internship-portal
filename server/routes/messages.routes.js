@@ -18,8 +18,10 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage, limits: { fileSize: 20 * 1024 * 1024 } }); // 20MB limit
 
+const { persistUploads } = require('../middleware/upload.middleware');
+
 router.get('/', protect, getMessages);
-router.post('/', protect, upload.single('attachment'), sendMessage);
+router.post('/', protect, upload.single('attachment'), persistUploads, sendMessage);
 router.get('/unread', protect, getUnreadCount);
 router.get('/conversations', protect, getConversations);
 

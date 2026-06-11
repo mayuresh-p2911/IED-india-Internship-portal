@@ -18,8 +18,10 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
+const { persistUploads } = require('../middleware/upload.middleware');
+
 router.get('/', protect, authorize('admin', 'hr', 'mentor'), getApplications);
-router.post('/', upload.fields([{ name: 'resume', maxCount: 1 }, { name: 'photo', maxCount: 1 }]), submitApplication);
+router.post('/', upload.fields([{ name: 'resume', maxCount: 1 }, { name: 'photo', maxCount: 1 }]), persistUploads, submitApplication);
 router.get('/:id', protect, getApplication);
 router.patch('/:id/status', protect, authorize('admin', 'hr'), updateStatus);
 router.delete('/:id', protect, authorize('admin'), deleteApplication);
