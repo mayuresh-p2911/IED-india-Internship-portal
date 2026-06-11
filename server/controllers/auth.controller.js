@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-const generateToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRE || '7d' });
+const generateToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET || 'ied_india_ims_super_secret_jwt_key_2024', { expiresIn: process.env.JWT_EXPIRE || '7d' });
 
 // @desc  Register new user
 // @route POST /api/auth/register
