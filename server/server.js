@@ -21,7 +21,41 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Static file serving (uploads & client)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.get('/uploads/*', (req, res) => {
+  const relativePath = req.params[0];
+  const filename = path.basename(relativePath);
+  const isVercel = process.env.VERCEL || process.env.NODE_ENV === 'production';
+  
+  if (isVercel) {
+    let filePath = path.join(require('os').tmpdir(), relativePath);
+    if (require('fs').existsSync(filePath)) {
+      return res.sendFile(filePath);
+    }
+    const tmpDirs = ['profile', 'messages', 'applications', 'onboarding', 'tasks'];
+    for (const dir of tmpDirs) {
+      filePath = path.join(require('os').tmpdir(), dir, filename);
+      if (require('fs').existsSync(filePath)) {
+        return res.sendFile(filePath);
+      }
+    }
+  }
+  
+  let localPath = path.join(__dirname, 'uploads', relativePath);
+  if (require('fs').existsSync(localPath)) {
+    return res.sendFile(localPath);
+  }
+  
+  const localDirs = ['', 'applications', 'onboarding', 'tasks'];
+  for (const dir of localDirs) {
+    localPath = path.join(__dirname, 'uploads', dir, filename);
+    if (require('fs').existsSync(localPath)) {
+      return res.sendFile(localPath);
+    }
+  }
+  
+  res.status(404).send('File not found');
+});
+
 app.use(express.static(path.join(__dirname, '../client')));
 
 // API Routes

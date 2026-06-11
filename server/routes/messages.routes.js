@@ -5,11 +5,13 @@ const { protect } = require('../middleware/auth.middleware');
 const multer = require('multer');
 const path = require('path');
 
+const fs = require('fs');
 const os = require('os');
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const isVercel = process.env.VERCEL || process.env.NODE_ENV === 'production';
     const uploadDir = isVercel ? path.join(os.tmpdir(), 'messages') : path.join(__dirname, '../uploads');
+    fs.mkdirSync(uploadDir, { recursive: true });
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => cb(null, `msg_${Date.now()}_${file.originalname.replace(/\s+/g, '_')}`)
