@@ -1,0 +1,120 @@
+/* ═══════════════════════════════════════════════════════════
+   IED India IMS — Dashboard CSS
+   Theme: Deep Navy + Gold (iedindiaofficial.com)
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Welcome Banner ──────────────────────────────────── */
+.welcome-banner {
+  background: linear-gradient(135deg, #041434 0%, #0d1b3e 100%);
+  border: 1px solid rgba(252, 163, 17, 0.1);
+  border-radius: var(--radius-xl);
+  padding: var(--space-xl);
+  margin-bottom: var(--space-xl);
+  display: flex; align-items: center; justify-content: space-between;
+  position: relative; overflow: hidden;
+  color: #ffffff;
+}
+.welcome-banner::before {
+  content: ''; position: absolute; top: -50%; right: -100px;
+  width: 300px; height: 300px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(252, 163, 17, 0.06) 0%, transparent 70%);
+}
+.welcome-banner::after {
+  content: ''; position: absolute; bottom: -60%; left: -50px;
+  width: 250px; height: 250px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(3, 55, 122, 0.15) 0%, transparent 70%);
+}
+.welcome-text h2 { font-size: 1.8rem; margin-bottom: var(--space-xs); color: #ffffff; }
+.welcome-text h2 span { color: var(--accent-gold); -webkit-text-fill-color: initial; background: none; }
+.welcome-text p { color: rgba(255, 255, 255, 0.55); }
+.welcome-emoji { font-size: 4rem; animation: float 3s ease-in-out infinite; }
+
+/* ── Quick Actions ───────────────────────────────────── */
+.quick-actions { display: flex; gap: var(--space-sm); flex-wrap: wrap; margin-bottom: var(--space-xl); }
+.quick-action-btn {
+  display: flex; align-items: center; gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: 30px; border: 1px solid var(--border-color);
+  background: var(--bg-card); color: var(--text-secondary);
+  cursor: pointer; transition: var(--trans-fast); font-size: 0.85rem;
+  font-family: var(--font-body); font-weight: 500;
+}
+.quick-action-btn:hover { border-color: var(--accent-blue); color: var(--accent-blue); background: rgba(3, 55, 122, 0.04); transform: translateY(-1px); }
+.quick-action-btn i { width: 16px; height: 16px; }
+
+/* ── Activity Feed ───────────────────────────────────── */
+.activity-feed { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: var(--space-lg); }
+.activity-feed h4 { margin-bottom: var(--space-lg); display: flex; align-items: center; gap: var(--space-sm); }
+.activity-item {
+  display: flex; align-items: flex-start; gap: var(--space-sm);
+  padding: var(--space-sm) 0; border-bottom: 1px solid var(--border-color);
+}
+.activity-item:last-child { border-bottom: none; }
+.activity-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 6px; }
+.activity-dot.blue   { background: var(--accent-blue); box-shadow: 0 0 6px rgba(3, 55, 122, 0.3); }
+.activity-dot.green  { background: var(--accent-green); box-shadow: 0 0 6px rgba(16, 185, 129, 0.3); }
+.activity-dot.gold   { background: var(--accent-gold); box-shadow: 0 0 6px rgba(252, 163, 17, 0.3); }
+.activity-dot.red    { background: var(--accent-red); box-shadow: 0 0 6px rgba(233, 69, 96, 0.3); }
+.activity-text { flex: 1; font-size: 0.85rem; }
+.activity-time { font-size: 0.75rem; color: var(--text-muted); }
+
+/* ── Dashboard Grid ──────────────────────────────────── */
+.dashboard-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md); margin-bottom: var(--space-md); }
+.dashboard-grid-3 { display: grid; grid-template-columns: 2fr 1fr; gap: var(--space-md); }
+
+/* ── Intern Timeline ─────────────────────────────────── */
+.intern-timeline-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: var(--space-lg); }
+.intern-timeline-card h4 { margin-bottom: var(--space-lg); }
+
+/* ── Attendance widget ───────────────────────────────── */
+.att-widget { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: var(--space-lg); }
+.att-widget h4 { margin-bottom: var(--space-md); }
+.att-today-status { display: flex; gap: var(--space-md); margin-bottom: var(--space-md); }
+.att-status-item { flex: 1; text-align: center; padding: var(--space-md); border-radius: var(--radius-md); background: #f0f4f8; border: 1px solid var(--border-color); }
+.att-status-item .att-status-val { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
+.att-status-item .att-status-lbl { font-size: 0.75rem; color: var(--text-muted); }
+.att-check-btn {
+  width: 100%; padding: var(--space-md); border-radius: 30px;
+  background: var(--grad-blue); border: none; color: white;
+  font-weight: 600; cursor: pointer; font-family: var(--font-body); font-size: 0.9rem;
+  transition: var(--trans-fast); display: flex; align-items: center; justify-content: center; gap: var(--space-sm);
+}
+.att-check-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(3, 55, 122, 0.35); }
+.att-check-btn.check-out { background: linear-gradient(135deg, #E94560, #dc2626); }
+
+/* ── Mentor Intern List ──────────────────────────────── */
+.intern-list-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden; }
+.intern-list-card h4 { padding: var(--space-md) var(--space-lg); border-bottom: 1px solid var(--border-color); }
+.intern-list-item { display: flex; align-items: center; gap: var(--space-md); padding: var(--space-md) var(--space-lg); border-bottom: 1px solid var(--border-color); transition: var(--trans-fast); }
+.intern-list-item:last-child { border-bottom: none; }
+.intern-list-item:hover { background: rgba(3, 55, 122, 0.03); }
+.intern-list-info { flex: 1; }
+.intern-list-name { font-weight: 600; font-size: 0.9rem; }
+.intern-list-dept { font-size: 0.75rem; color: var(--text-muted); }
+.intern-list-score { font-size: 1.1rem; font-weight: 700; color: var(--accent-blue); }
+
+/* ── Certificate Card ────────────────────────────────── */
+.cert-card {
+  background: linear-gradient(135deg, #03377A 0%, #041434 100%);
+  border: 1px solid rgba(252, 163, 17, 0.15);
+  border-radius: var(--radius-lg); padding: var(--space-lg);
+  position: relative; overflow: hidden;
+  color: #ffffff;
+}
+.cert-card::before {
+  content: ''; position: absolute; right: var(--space-lg); top: var(--space-lg);
+  font-size: 2rem; opacity: 0.3;
+}
+.cert-card h4 { color: var(--accent-gold); margin-bottom: var(--space-xs); }
+.cert-card .cert-no { font-size: 0.75rem; color: rgba(255, 255, 255, 0.45); margin-bottom: var(--space-sm); font-family: monospace; }
+.cert-card .cert-name { font-size: 1.1rem; font-weight: 700; color: #ffffff; margin-bottom: var(--space-xs); }
+.cert-card .cert-dept { font-size: 0.8rem; color: rgba(255, 255, 255, 0.6); }
+
+/* ── Responsive ─────────────────────────────────────── */
+@media (max-width: 900px) {
+  .dashboard-grid-2, .dashboard-grid-3 { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .welcome-emoji { display: none; }
+  .welcome-banner { padding: var(--space-lg); }
+}

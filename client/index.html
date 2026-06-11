@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IED India — Internship Management Portal</title>
+  <meta name="description" content="IED India Pvt Ltd Internship Management System — manage applications, attendance, tasks, evaluations and certificates." />
+
+
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/css/main.css?v=1.0.7" />
+  <link rel="stylesheet" href="/css/components.css?v=1.0.7" />
+  <link rel="stylesheet" href="/css/sidebar.css?v=1.0.7" />
+  <link rel="stylesheet" href="/css/dashboard.css?v=1.0.7" />
+</head>
+<body>
+
+  <!-- LOGIN PAGE -->
+  <div id="login-page" class="login-page">
+    <div class="login-bg">
+      <div class="login-orb orb-1"></div>
+      <div class="login-orb orb-2"></div>
+      <div class="login-orb orb-3"></div>
+    </div>
+    <div class="login-container">
+      <div class="login-brand">
+        <div class="brand-logo">
+          <span class="logo-icon"><img src="/img/logo.png" alt="IED India" style="width:120px;height:120px;object-fit:contain" /></span>
+        </div>
+        <h1 class="brand-name">IED India</h1>
+        <p class="brand-sub">Internship Management Portal</p>
+      </div>
+      <div class="login-card glass-card">
+        <h2>Welcome Back</h2>
+        <p class="login-subtitle">Sign in to your account</p>
+        <form id="login-form" class="login-form">
+          <div class="form-group">
+            <label for="login-email">Email Address</label>
+            <div class="input-wrap">
+              <i data-lucide="mail" class="input-icon"></i>
+              <input type="email" id="login-email" placeholder="you@ied.com" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="login-password">Password</label>
+            <div class="input-wrap">
+              <i data-lucide="lock" class="input-icon"></i>
+              <input type="password" id="login-password" placeholder="••••••••" required />
+              <button type="button" id="toggle-pass" class="pass-toggle"><i data-lucide="eye"></i></button>
+            </div>
+          </div>
+          <!-- Captcha Box -->
+          <div class="form-group" style="margin-top: 15px; margin-bottom: 15px;">
+            <div id="captcha-container" style="display: flex; align-items: center; justify-content: space-between; border: 1px solid rgba(255,255,255,0.15); padding: 12px 16px; border-radius: var(--radius-md); background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); transition: var(--trans-fast);">
+              <div style="display: flex; align-items: center; gap: 12px; cursor: pointer;" id="captcha-trigger">
+                <div id="captcha-checkbox" style="width: 24px; height: 24px; border: 2px solid rgba(255,255,255,0.2); border-radius: 4px; display: flex; align-items: center; justify-content: center; background: #ffffff; transition: var(--trans-fast); cursor: pointer;">
+                  <!-- Checkmark or spinner injected by JS -->
+                </div>
+                <span style="font-size: 0.9rem; font-weight: 500; color: rgba(255, 255, 255, 0.85); user-select: none;">I am not a robot</span>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 2px; opacity: 0.75; font-size: 0.65rem; color: rgba(255, 255, 255, 0.5); user-select: none;">
+                <img src="/img/logo.png" style="width: 22px; height: 22px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));" />
+                <span>Security Check</span>
+              </div>
+            </div>
+          </div>
+          <div id="login-error" class="error-msg hidden"></div>
+          <button type="submit" class="btn btn-primary btn-full" id="login-btn">
+            <span>Sign In</span>
+            <i data-lucide="arrow-right"></i>
+          </button>
+        </form>
+
+      </div>
+      <p class="apply-link">New here? <a href="#" id="show-signup">Create an Account</a> · <a href="#" id="show-apply">Apply for Internship</a></p>
+    </div>
+  </div>
+
+  <!-- SIGNUP PAGE -->
+  <div id="signup-page" class="login-page hidden">
+    <div class="login-bg">
+      <div class="login-orb orb-1"></div>
+      <div class="login-orb orb-2"></div>
+      <div class="login-orb orb-3"></div>
+    </div>
+    <div class="login-container">
+      <div class="login-brand">
+        <div class="brand-logo">
+          <span class="logo-icon"><img src="/img/logo.png" alt="IED India" style="width:120px;height:120px;object-fit:contain" /></span>
+        </div>
+        <h1 class="brand-name">IED India</h1>
+        <p class="brand-sub">Create Your Account</p>
+      </div>
+      <div class="login-card glass-card">
+        <h2>Sign Up</h2>
+        <p class="login-subtitle">Join the internship portal</p>
+        <form id="signup-form" class="login-form">
+          <div class="form-group">
+            <label for="signup-name">Full Name *</label>
+            <div class="input-wrap">
+              <i data-lucide="user" class="input-icon"></i>
+              <input type="text" id="signup-name" placeholder="Your full name" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="signup-email">Email Address *</label>
+            <div class="input-wrap">
+              <i data-lucide="mail" class="input-icon"></i>
+              <input type="email" id="signup-email" placeholder="you@email.com" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="signup-password">Password *</label>
+            <div class="input-wrap">
+              <i data-lucide="lock" class="input-icon"></i>
+              <input type="password" id="signup-password" placeholder="Min 6 characters" required minlength="6" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="signup-phone">Phone</label>
+            <div class="input-wrap">
+              <i data-lucide="phone" class="input-icon"></i>
+              <input type="tel" id="signup-phone" placeholder="10-digit number" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="signup-college">College / University</label>
+            <div class="input-wrap">
+              <i data-lucide="building" class="input-icon"></i>
+              <input type="text" id="signup-college" placeholder="Your college" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="signup-department">Department</label>
+            <select id="signup-department">
+              <option value="">Select Department</option>
+              <option>Digital Marketing</option>
+              <option>HR & Recruitment</option>
+              <option>Business Development</option>
+              <option>Social Media</option>
+              <option>Entrepreneurship Training</option>
+              <option>IT Support</option>
+            </select>
+          </div>
+          <div id="signup-error" class="error-msg hidden"></div>
+          <button type="submit" class="btn btn-primary btn-full" id="signup-btn">
+            <span>Create Account</span>
+            <i data-lucide="arrow-right"></i>
+          </button>
+        </form>
+      </div>
+      <p class="apply-link">Already have an account? <a href="#" id="back-to-login-from-signup">Sign In</a></p>
+    </div>
+  </div>
+
+  <!-- APPLICATION FORM (Public) -->
+  <div id="apply-page" class="apply-page hidden">
+    <div class="apply-header">
+      <button id="back-to-login" class="btn btn-ghost"><i data-lucide="arrow-left"></i> Back to Login</button>
+      <h1>Apply for Internship</h1>
+      <p>IED India Pvt Ltd</p>
+    </div>
+    <div class="apply-container">
+      <form id="apply-form" class="apply-form" enctype="multipart/form-data">
+        <div class="form-section">
+          <h3><i data-lucide="user"></i> Personal Information</h3>
+          <div class="form-row">
+            <div class="form-group"><label>Full Name *</label><input type="text" name="name" required placeholder="Your full name" /></div>
+            <div class="form-group"><label>Email *</label><input type="email" name="email" required placeholder="your@email.com" /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Phone *</label><input type="tel" name="phone" required placeholder="10-digit number" /></div>
+            <div class="form-group"><label>College/University *</label><input type="text" name="college" required placeholder="College name" /></div>
+          </div>
+          <div class="form-group"><label>Course/Degree</label><input type="text" name="course" placeholder="e.g. B.Tech Computer Science" /></div>
+        </div>
+        <div class="form-section">
+          <h3><i data-lucide="briefcase"></i> Internship Preferences</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Department *</label>
+              <select name="department" required>
+                <option value="">Select Department</option>
+                <option>Digital Marketing</option>
+                <option>HR & Recruitment</option>
+                <option>Business Development</option>
+                <option>Social Media</option>
+                <option>Entrepreneurship Training</option>
+                <option>IT Support</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Duration (Weeks) *</label>
+              <select name="duration" required>
+                <option value="4">4 Weeks</option>
+                <option value="6">6 Weeks</option>
+                <option value="8" selected>8 Weeks</option>
+                <option value="10">10 Weeks</option>
+                <option value="12">12 Weeks</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group"><label>Cover Letter / About You</label><textarea name="coverLetter" rows="4" placeholder="Tell us about yourself and why you want to intern at IED India..."></textarea></div>
+        </div>
+        <div class="form-section">
+          <h3><i data-lucide="paperclip"></i> Documents</h3>
+          <div class="form-row">
+            <div class="form-group"><label>Resume (PDF) *</label><input type="file" name="resume" accept=".pdf,.doc,.docx" required /></div>
+            <div class="form-group"><label>Passport Photo</label><input type="file" name="photo" accept="image/*" /></div>
+          </div>
+        </div>
+        <div id="apply-msg" class="hidden"></div>
+        <button type="submit" class="btn btn-primary btn-full">Submit Application <i data-lucide="send"></i></button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MAIN APP (Dashboard) -->
+  <div id="app" class="app hidden">
+    <!-- Mobile Menu Toggle Button (Floating) -->
+    <button class="mobile-menu-toggle" id="mobile-menu-toggle" title="Toggle Menu">
+      <i data-lucide="menu"></i>
+    </button>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-logo"><img src="/img/logo.png" alt="IED India" style="width:48px;height:48px;object-fit:contain" /></div>
+        <div class="sidebar-brand-text">
+          <span class="sidebar-name">IED India</span>
+          <span class="sidebar-sub">IMS Portal</span>
+        </div>
+        <button class="sidebar-collapse-btn" id="sidebar-collapse"><i data-lucide="chevron-left"></i></button>
+      </div>
+      <div class="sidebar-user">
+        <div class="sidebar-avatar" id="sidebar-avatar">A</div>
+        <div class="sidebar-user-info">
+          <span class="sidebar-user-name" id="sidebar-username">Loading...</span>
+          <span class="sidebar-user-role badge" id="sidebar-role">-</span>
+        </div>
+      </div>
+      <nav class="sidebar-nav" id="sidebar-nav">
+        <!-- Dynamically generated per role -->
+      </nav>
+      <div class="sidebar-footer">
+        <button class="sidebar-nav-item" id="sidebar-edit-profile">
+          <i data-lucide="user-pen"></i>
+          <span>Edit Profile</span>
+        </button>
+        <button class="sidebar-nav-item" id="sidebar-change-password">
+          <i data-lucide="key-round"></i>
+          <span>Change Password</span>
+        </button>
+        <button class="sidebar-nav-item" id="logout-btn" style="color: var(--accent-red)">
+          <i data-lucide="log-out"></i>
+          <span>Logout</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content" id="main-content">
+      <!-- Top Bar -->
+      <header class="topbar">
+        <button class="menu-toggle" id="menu-toggle"><i data-lucide="menu"></i></button>
+        <div class="topbar-title" id="topbar-title">Dashboard</div>
+        <div class="topbar-actions">
+          <button class="topbar-btn" id="notif-btn" title="Notifications">
+            <i data-lucide="bell"></i>
+            <span class="notif-badge hidden" id="notif-badge">0</span>
+          </button>
+          <div class="topbar-user" id="topbar-user-wrap">
+            <div class="topbar-avatar" id="topbar-avatar">A</div>
+            <!-- Profile Dropdown -->
+            <div class="profile-dropdown hidden" id="profile-dropdown">
+              <div class="profile-dropdown-header">
+                <div class="profile-dropdown-avatar" id="dropdown-avatar">A</div>
+                <div class="profile-dropdown-info">
+                  <span class="profile-dropdown-name" id="dropdown-name">User</span>
+                  <span class="profile-dropdown-email" id="dropdown-email">user@ied.com</span>
+                </div>
+              </div>
+              <div class="profile-dropdown-divider"></div>
+              <button class="profile-dropdown-item" id="dropdown-edit-profile">
+                <i data-lucide="user-pen"></i>
+                <span>Edit Profile</span>
+              </button>
+              <button class="profile-dropdown-item" id="dropdown-change-password">
+                <i data-lucide="key-round"></i>
+                <span>Change Password</span>
+              </button>
+              <div class="profile-dropdown-divider"></div>
+              <button class="profile-dropdown-item danger" id="dropdown-logout">
+                <i data-lucide="log-out"></i>
+                <span>Logout</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Page Content -->
+      <main class="page-content" id="page-content">
+        <!-- Module content injected here -->
+      </main>
+    </div>
+  </div>
+
+  <!-- Global Modal -->
+  <div class="modal-overlay hidden" id="modal-overlay">
+    <div class="modal glass-card" id="modal">
+      <div class="modal-header">
+        <h3 id="modal-title">Modal Title</h3>
+        <button class="modal-close" id="modal-close"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-footer" id="modal-footer"></div>
+    </div>
+  </div>
+
+  <!-- Toast Notifications -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/modules/dashboard.js"></script>
+  <script src="/js/modules/users.js"></script>
+  <script src="/js/modules/applications.js"></script>
+  <script src="/js/modules/interviews.js"></script>
+  <script src="/js/modules/onboarding.js"></script>
+  <script src="/js/modules/attendance.js"></script>
+  <script src="/js/modules/tasks.js"></script>
+  <script src="/js/modules/communication.js"></script>
+  <script src="/js/modules/evaluation.js"></script>
+  <script src="/js/modules/certificates.js"></script>
+  <script src="/js/modules/analytics.js"></script>
+  <script src="/js/app.js?v=1.0.6"></script>
+</body>
+</html>

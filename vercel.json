@@ -1,0 +1,28 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/api/index.js"
+    },
+    {
+      "source": "/uploads/:path*",
+      "destination": "/api/index.js"
+    },
+    {
+      "source": "/css/:path*",
+      "destination": "/client/css/:path*"
+    },
+    {
+      "source": "/js/:path*",
+      "destination": "/client/js/:path*"
+    },
+    {
+      "source": "/img/:path*",
+      "destination": "/client/img/:path*"
+    },
+    {
+      "source": "/((?!api|uploads|css|js|img).*)" ,
+      "destination": "/client/index.html"
+    }
+  ]
+}

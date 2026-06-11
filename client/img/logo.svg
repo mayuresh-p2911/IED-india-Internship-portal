@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />
+    <title>IED India — Learn Skills. Sell Products. Earn Rewards.</title>
+    <meta name="description" content="IED India is a unified ecosystem where you can build skills through expert-led courses, sell products in a trusted marketplace, and earn through referrals." />
+
+    <!-- Open Graph / Social Share (WhatsApp, Facebook, LinkedIn, Telegram) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="IED India" />
+    <meta property="og:title" content="IED India — Learn Skills. Sell Products. Earn Rewards." />
+    <meta property="og:description" content="Welcome to IED India — your all-in-one platform to build skills through expert-led courses, sell products in a trusted marketplace, and earn rewards through our referral network. Join thousands of learners, sellers, and earners today!" />
+    <meta property="og:image" content="https://res.cloudinary.com/ied-india/image/upload/v1/platform/og-banner.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="IED India — Learn, Sell, Earn" />
+    <!-- Twitter / X Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="IED India — Learn Skills. Sell Products. Earn Rewards." />
+    <meta name="twitter:description" content="Welcome to IED India — your all-in-one platform to build skills, sell products, and earn rewards. Join thousands of learners, sellers, and earners today!" />
+    <meta name="twitter:image" content="https://res.cloudinary.com/ied-india/image/upload/v1/platform/og-banner.jpg" />
+
+    <!-- DNS prefetch & preconnect for third-party domains (saves 100-300ms per connection) -->
+    <link rel="preconnect" href="https://res.cloudinary.com" crossorigin />
+    <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+    <link rel="preconnect" href="https://clerk.shared.lcl.dev" crossorigin />
+    <link rel="dns-prefetch" href="https://clerk.shared.lcl.dev" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <!-- Razorpay Checkout SDK -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script type="module" crossorigin src="/assets/index-Cw7OLISL.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-router-B6VvmtBG.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-clerk-N6JRFA_r.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-icons-DqbADKHZ.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-BjERVm0s.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
