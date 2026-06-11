@@ -27,7 +27,7 @@ const seed = async (shouldExit = false) => {
   const admin = await User.create({ 
     name: 'MAYURESH P', 
     email: 'mayure12sh12@gmail.com', 
-    password: 'KITTY@29a11@', 
+    password: 'mAyUrEsH2911', 
     role: 'admin', 
     department: 'Management', 
     phone: '' 
@@ -37,7 +37,7 @@ const seed = async (shouldExit = false) => {
   console.log('\n[OK] Database seeded successfully with Admin account!');
   console.log('\n--- Admin Login Credentials ---');
   console.log(`Email    : mayure12sh12@gmail.com`);
-  console.log(`Password : KITTY@29a11@`);
+  console.log(`Password : mAyUrEsH2911`);
   console.log('-------------------------------');
 
   if (shouldExit) {

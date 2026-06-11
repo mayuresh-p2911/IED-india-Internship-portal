@@ -2,12 +2,37 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    const uri = process.env.MONGODB_URI || 'mongodb://mayure12sh12_db_user:McqyEZqD4rkwYeXj@ac-vhu35jb-shard-00-00.isglc46.mongodb.net:27017,ac-vhu35jb-shard-00-01.isglc46.mongodb.net:27017,ac-vhu35jb-shard-00-02.isglc46.mongodb.net:27017/ied-ims?ssl=true&replicaSet=atlas-113or1-shard-0&authSource=admin&retryWrites=true&w=majority';
+    const uri = process.env.MONGODB_URI || 'mongodb://mayure12sh12_db_user:mAyUrEsH2911@ac-vhu35jb-shard-00-00.isglc46.mongodb.net:27017,ac-vhu35jb-shard-00-01.isglc46.mongodb.net:27017,ac-vhu35jb-shard-00-02.isglc46.mongodb.net:27017/ied-ims?ssl=true&replicaSet=atlas-113or1-shard-0&authSource=admin&retryWrites=true&w=majority';
     console.log('[INFO] Connecting to MongoDB...');
     const conn = await mongoose.connect(uri, {
       serverSelectionTimeoutMS: 5000,
     });
     console.log(`[OK] MongoDB Connected: ${conn.connection.host}`);
+
+    // Auto-seed or update admin credentials
+    try {
+      const User = require('../models/User');
+      const adminUser = await User.findOne({ email: 'mayure12sh12@gmail.com' });
+      if (!adminUser) {
+        console.log('[INFO] Admin user not found. Auto-seeding admin user...');
+        await User.create({
+          name: 'MAYURESH P',
+          email: 'mayure12sh12@gmail.com',
+          password: 'mAyUrEsH2911',
+          role: 'admin',
+          department: 'Management',
+          phone: ''
+        });
+        console.log('[OK] Admin user auto-seeded successfully!');
+      } else {
+        console.log('[INFO] Admin user exists. Ensuring password is set to mAyUrEsH2911...');
+        adminUser.password = 'mAyUrEsH2911';
+        await adminUser.save();
+        console.log('[OK] Admin password checked/updated successfully!');
+      }
+    } catch (seedErr) {
+      console.warn(`[WARN] Auto-seeding/updating admin user failed: ${seedErr.message}`);
+    }
   } catch (error) {
     console.warn(`[WARN] Primary MongoDB connection failed: ${error.message}`);
     
