@@ -5,7 +5,16 @@ const { getTasks, getTask, createTask, updateTask, submitTask, reviewTask, delet
 const { protect } = require('../middleware/auth.middleware');
 const { authorize } = require('../middleware/role.middleware');
 
-const upload = multer({ dest: path.join(__dirname, '../uploads/tasks') });
+const os = require('os');
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const isVercel = process.env.VERCEL || process.env.NODE_ENV === 'production';
+    const uploadDir = isVercel ? path.join(os.tmpdir(), 'tasks') : path.join(__dirname, '../uploads/tasks');
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
+});
+const upload = multer({ storage });
 
 router.get('/', protect, getTasks);
 router.post('/', protect, authorize('admin', 'hr', 'mentor'), createTask);
