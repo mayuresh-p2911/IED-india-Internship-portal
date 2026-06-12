@@ -71,7 +71,6 @@ app.get('/uploads/*', async (req, res) => {
 app.use(express.static(path.join(__dirname, '../client')));
 
 // API Routes
-app.get('/api/test-email', async (req, res) => { try { const r = await require('./services/email.service').sendApplicationReceived('test@example.com', 'Test'); res.json({ r, e: process.env.EMAIL_USER }); } catch(e) { res.json({ error: e.message }); } });
 app.use('/api/auth',          require('./routes/auth.routes'));
 app.use('/api/users',         require('./routes/users.routes'));
 app.use('/api/applications',  require('./routes/applications.routes'));
