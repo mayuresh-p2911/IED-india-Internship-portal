@@ -1,12 +1,13 @@
 const router = require('express').Router();
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const { getOnboarding, getOnboardingById, getMyOnboarding, updateOnboarding } = require('../controllers/onboarding.controller');
 const { protect } = require('../middleware/auth.middleware');
 const { authorize } = require('../middleware/role.middleware');
+const { persistUploads } = require('../middleware/upload.middleware');
 
-const fs = require('fs');
-const isVercel = process.env.VERCEL || process.env.NODE_ENV === 'production';
+const isVercel = !!(process.env.VERCEL || process.env.NODE_ENV === 'production');
 
 const storage = isVercel
   ? multer.memoryStorage()
@@ -19,6 +20,9 @@ const storage = isVercel
       filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
     });
 
+const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
+
+// memoryStorage does not set filename — generate it before persistUploads runs
 const setFilenames = (req, res, next) => {
   if (req.files) {
     for (const field of Object.keys(req.files)) {
@@ -29,10 +33,6 @@ const setFilenames = (req, res, next) => {
   }
   next();
 };
-
-const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
-
-const { persistUploads } = require('../middleware/upload.middleware');
 
 router.get('/', protect, authorize('admin', 'hr'), getOnboarding);
 router.get('/me', protect, authorize('intern'), getMyOnboarding);

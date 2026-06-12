@@ -1,12 +1,13 @@
 const router = require('express').Router();
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const { getTasks, getTask, createTask, updateTask, submitTask, reviewTask, deleteTask } = require('../controllers/tasks.controller');
 const { protect } = require('../middleware/auth.middleware');
 const { authorize } = require('../middleware/role.middleware');
+const { persistUploads } = require('../middleware/upload.middleware');
 
-const fs = require('fs');
-const isVercel = process.env.VERCEL || process.env.NODE_ENV === 'production';
+const isVercel = !!(process.env.VERCEL || process.env.NODE_ENV === 'production');
 
 const storage = isVercel
   ? multer.memoryStorage()
@@ -19,16 +20,15 @@ const storage = isVercel
       filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
     });
 
+const upload = multer({ storage });
+
+// memoryStorage does not set filename — generate it before persistUploads runs
 const setFilename = (req, res, next) => {
   if (req.file && !req.file.filename) {
     req.file.filename = `${Date.now()}-${req.file.originalname}`;
   }
   next();
 };
-
-const upload = multer({ storage });
-
-const { persistUploads } = require('../middleware/upload.middleware');
 
 router.get('/', protect, getTasks);
 router.post('/', protect, authorize('admin', 'hr', 'mentor'), createTask);
