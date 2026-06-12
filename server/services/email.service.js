@@ -6,7 +6,9 @@
 const nodemailer = require('nodemailer');
 const https = require('https');
 
-const BASE = process.env.CLIENT_URL || 'https://ied-india-internship-portal.vercel.app';
+const BASE = process.env.NODE_ENV === 'development'
+  ? (process.env.CLIENT_URL || 'http://localhost:5000')
+  : 'https://ied-india-internship-portal.vercel.app';
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
 // ── Core send function ──────────────────────────────────────
