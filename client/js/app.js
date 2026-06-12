@@ -124,6 +124,40 @@ const App = (() => {
       btn.addEventListener('click', () => navigate(btn.dataset.module));
     });
     lucide.createIcons();
+
+    // Build bottom nav for mobile
+    buildBottomNav(role, navConfig);
+  };
+
+  // ── Bottom Nav (mobile only) ────────────────────────────
+  const BOTTOM_NAV_MAX = 5;
+
+  const buildBottomNav = (role, navConfig) => {
+    const bottomNav = document.getElementById('bottom-nav');
+    if (!bottomNav) return;
+
+    // Collect all nav items flat, then pick the most important ones
+    const allItems = navConfig.flatMap(s => s.items);
+    // Always show dashboard first, then pick next items up to max
+    const priority = ['dashboard', 'tasks', 'attendance', 'communication', 'leaves',
+                      'applications', 'users', 'evaluation', 'analytics'];
+    const sorted = [
+      ...priority.filter(id => allItems.find(i => i.id === id)).map(id => allItems.find(i => i.id === id)),
+      ...allItems.filter(i => !priority.includes(i.id))
+    ].slice(0, BOTTOM_NAV_MAX);
+
+    bottomNav.innerHTML = sorted.map(item => `
+      <button class="bottom-nav-item ${item.id === currentModule ? 'active' : ''}" data-module="${item.id}">
+        <i data-lucide="${item.icon}"></i>
+        <span>${item.label.replace('Management','').replace('Requests','').trim()}</span>
+        ${item.id === 'communication' ? '<span class="bottom-nav-dot hidden" id="bottom-msg-dot"></span>' : ''}
+      </button>
+    `).join('');
+
+    bottomNav.querySelectorAll('.bottom-nav-item').forEach(btn => {
+      btn.addEventListener('click', () => navigate(btn.dataset.module));
+    });
+    lucide.createIcons();
   };
 
   const updateUserUI = () => {
@@ -160,8 +194,13 @@ const App = (() => {
     currentModule = module;
     document.getElementById('topbar-title').textContent = MODULE_TITLES[module] || module;
 
-    // Update active nav item
+    // Update active state in sidebar
     document.querySelectorAll('.sidebar-nav-item[data-module]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.module === module);
+    });
+
+    // Update active state in bottom nav
+    document.querySelectorAll('.bottom-nav-item[data-module]').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.module === module);
     });
 
@@ -175,8 +214,9 @@ const App = (() => {
       content.innerHTML = renderEmpty('Module not available', 'This feature is coming soon.');
     }
 
-    // Close mobile sidebar
-    document.getElementById('sidebar').classList.remove('mobile-open');
+    // Close mobile sidebar and overlay
+    document.getElementById('sidebar')?.classList.remove('mobile-open');
+    document.getElementById('sidebar-overlay')?.classList.remove('visible');
     // Close profile dropdown if open
     closeProfileDropdown();
   };
@@ -186,9 +226,11 @@ const App = (() => {
       const data = await API.get('/messages/unread');
       const badge = document.getElementById('msg-badge');
       const notifBadge = document.getElementById('notif-badge');
+      const bottomDot = document.getElementById('bottom-msg-dot');
       const count = data.count || 0;
       if (badge) { badge.textContent = count; badge.classList.toggle('hidden', count === 0); }
       if (notifBadge) { notifBadge.textContent = count; notifBadge.classList.toggle('hidden', count === 0); }
+      if (bottomDot) { bottomDot.classList.toggle('hidden', count === 0); }
     } catch {}
   };
 
@@ -398,14 +440,18 @@ const App = (() => {
       topbar?.classList.toggle('sidebar-collapsed');
     });
 
-    // Mobile menu
-    document.getElementById('menu-toggle')?.addEventListener('click', () => {
-      document.getElementById('sidebar').classList.toggle('mobile-open');
-    });
+    // Mobile menu — topbar hamburger
+    const openSidebar = () => {
+      document.getElementById('sidebar').classList.add('mobile-open');
+      document.getElementById('sidebar-overlay').classList.add('visible');
+    };
+    const closeSidebar = () => {
+      document.getElementById('sidebar').classList.remove('mobile-open');
+      document.getElementById('sidebar-overlay').classList.remove('visible');
+    };
 
-    document.getElementById('mobile-menu-toggle')?.addEventListener('click', () => {
-      document.getElementById('sidebar').classList.toggle('mobile-open');
-    });
+    document.getElementById('menu-toggle')?.addEventListener('click', openSidebar);
+    document.getElementById('sidebar-overlay')?.addEventListener('click', closeSidebar);
 
     // Logout (sidebar)
     document.getElementById('logout-btn').addEventListener('click', () => Auth.logout());

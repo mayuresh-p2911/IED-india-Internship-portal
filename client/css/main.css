@@ -300,9 +300,58 @@ a:hover { color: var(--accent-cyan); }
 @media (max-width: 768px) {
   .main-content { margin-left: 0; }
   .form-row { grid-template-columns: 1fr; }
-  .page-content { padding: var(--space-md); }
+  .page-content {
+    padding: var(--space-sm) var(--space-md);
+    /* clearance for bottom nav */
+    padding-bottom: 76px;
+  }
   .login-card { padding: var(--space-lg); }
+
+  /* Page header stacks on mobile */
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: var(--space-md);
+    gap: var(--space-sm);
+  }
+  .page-header h2 { font-size: 1.25rem; }
+
+  /* Modals: full-screen on small phones */
+  .modal {
+    max-width: 100%;
+    width: 100%;
+    max-height: 92vh;
+    margin: 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  /* Toast: wider and above bottom nav */
+  .toast-container {
+    bottom: 74px;
+    right: var(--space-sm);
+    left: var(--space-sm);
+  }
+  .toast {
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Typography scaling */
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.25rem; }
+  h3 { font-size: 1.1rem; }
 }
+
+@media (max-width: 480px) {
+  .page-content { padding: var(--space-sm); padding-bottom: 76px; }
+  .glass-card { border-radius: var(--radius-md); }
+}
+
 
 /* High Quality Rendering for Logos and Avatars */
 img {

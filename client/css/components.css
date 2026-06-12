@@ -292,17 +292,34 @@ tbody td { padding: var(--space-md) var(--space-lg); font-size: 0.875rem; }
 
 
 /* ── Responsive ─────────────────────────────────────── */
-@media (max-width: 640px) {
-  .stats-grid { grid-template-columns: 1fr 1fr; }
-  .kanban-board { grid-template-columns: 1fr; }
+
+/* Tables always horizontally scrollable */
+.table-container { -webkit-overflow-scrolling: touch; }
+
+@media (max-width: 768px) {
+  /* Stats: 2 columns on tablets */
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: var(--space-sm); margin-bottom: var(--space-md); }
+  .stat-card { padding: var(--space-md); }
+  .stat-value { font-size: 1.4rem; }
+
+  /* Charts: single column on mobile */
   .chart-grid { grid-template-columns: 1fr; }
 
-  /* Mobile chat: full-screen panel slide system */
+  /* Kanban: single column */
+  .kanban-board { grid-template-columns: 1fr; }
+
+  /* Filter bar: wrap and stretch */
+  .filter-bar { flex-direction: column; align-items: stretch; }
+  .filter-bar input, .filter-bar select { min-width: 0; width: 100%; }
+  .filter-bar .btn { width: 100%; justify-content: center; }
+
+  /* Chat: account for topbar (56px) and bottom nav (62px) */
   .chat-layout {
     display: block;
     position: relative;
     overflow: hidden;
-    height: calc(100vh - 120px);
+    height: calc(100vh - 56px - 62px - 8px);
+    border-radius: var(--radius-md);
   }
   .chat-list {
     display: block;
@@ -327,24 +344,37 @@ tbody td { padding: var(--space-md) var(--space-lg); font-size: 0.875rem; }
     z-index: 3;
     background: #fafcff;
   }
-  /* When a conversation is open on mobile */
-  .chat-layout.chat-open .chat-list  { transform: translateX(-100%); }
-  .chat-layout.chat-open .chat-area  { transform: translateX(0); }
-  /* Back button — only visible on mobile */
+  .chat-layout.chat-open .chat-list { transform: translateX(-100%); }
+  .chat-layout.chat-open .chat-area { transform: translateX(0); }
   .chat-back-btn {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     background: none;
     border: none;
     cursor: pointer;
     color: var(--accent-blue);
-    font-size: 0.9rem;
+    font-size: 0.875rem;
     font-weight: 600;
-    padding: 8px 12px;
+    padding: 6px 10px;
     flex-shrink: 0;
   }
+  .chat-input-area { padding: var(--space-sm) var(--space-md); }
+  .chat-messages { padding: var(--space-md); }
+
+  /* Table cells less padding on mobile */
+  thead th { padding: var(--space-sm) var(--space-md); font-size: 0.72rem; }
+  tbody td { padding: var(--space-sm) var(--space-md); font-size: 0.82rem; }
 }
+
+@media (max-width: 480px) {
+  /* Stats: single column on very small phones */
+  .stats-grid { grid-template-columns: 1fr; }
+  .stat-card { gap: var(--space-sm); }
+  .stat-icon { width: 40px; height: 40px; }
+  .stat-value { font-size: 1.25rem; }
+}
+
 
 /* ── Profile Dropdown ───────────────────────────────── */
 .topbar-user { position: relative; }

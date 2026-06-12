@@ -15,10 +15,10 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 
   <!-- CSS -->
-  <link rel="stylesheet" href="/css/main.css?v=1.0.7" />
-  <link rel="stylesheet" href="/css/components.css?v=1.0.7" />
-  <link rel="stylesheet" href="/css/sidebar.css?v=1.0.7" />
-  <link rel="stylesheet" href="/css/dashboard.css?v=1.0.7" />
+  <link rel="stylesheet" href="/css/main.css?v=2.0.0" />
+  <link rel="stylesheet" href="/css/components.css?v=2.0.0" />
+  <link rel="stylesheet" href="/css/sidebar.css?v=2.0.0" />
+  <link rel="stylesheet" href="/css/dashboard.css?v=2.0.0" />
 </head>
 <body>
 
@@ -224,10 +224,9 @@
 
   <!-- MAIN APP (Dashboard) -->
   <div id="app" class="app hidden">
-    <!-- Mobile Menu Toggle Button (Floating) -->
-    <button class="mobile-menu-toggle" id="mobile-menu-toggle" title="Toggle Menu">
-      <i data-lucide="menu"></i>
-    </button>
+    <!-- Sidebar overlay (mobile tap-outside-to-close) -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-brand">
@@ -310,6 +309,11 @@
         <!-- Module content injected here -->
       </main>
     </div>
+
+    <!-- Bottom Navigation Bar (mobile) -->
+    <nav class="bottom-nav" id="bottom-nav">
+      <!-- Dynamically built by JS per role -->
+    </nav>
   </div>
 
   <!-- Global Modal -->
