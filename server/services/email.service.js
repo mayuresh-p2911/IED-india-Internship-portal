@@ -43,7 +43,11 @@ const sendMail = async (to, subject, html) => {
       console.log(`📧 [MOCK EMAIL] To: ${to} | Subject: ${subject}`);
       return;
     }
-    await transporter.sendMail({ from: process.env.EMAIL_FROM || 'IED India <noreply@ied.com>', to, subject, html });
+    const fromUser = process.env.EMAIL_USER;
+    const fromName = process.env.EMAIL_FROM_NAME || 'IED India';
+    const fromAddress = process.env.EMAIL_FROM || `"${fromName}" <${fromUser}>`;
+    
+    await transporter.sendMail({ from: fromAddress, to, subject, html });
     console.log(`📧 [EMAIL SENT] To: ${to} | Subject: ${subject}`);
   } catch (err) {
     console.error(`❌ [EMAIL ERROR] ${to}:`, err.message);
