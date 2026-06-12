@@ -60,29 +60,57 @@ const updateInterview = async (req, res) => {
     // ── Accept intern after interview ─────────────────────
     if (acceptIntern && app) {
       const existingApp = await Application.findById(app._id);
-      if (existingApp && !existingApp.internId) {
+      if (existingApp) {
+        let internId = existingApp.internId;
         const tempPassword = generateInternPassword(app.name);
-        const intern = await User.create({
-          name: app.name,
-          email: app.email,
-          phone: app.phone || '',
-          college: app.college || '',
-          department: app.department || '',
-          role: 'intern',
-          password: tempPassword,
-          internshipStart: new Date(),
-          internshipEnd: new Date(Date.now() + (existingApp.duration || 8) * 7 * 24 * 3600 * 1000)
-        });
-        existingApp.internId = intern._id;
-        existingApp.status = 'selected';
-        await existingApp.save();
-        await Onboarding.create({ internId: intern._id, applicationId: app._id });
-        await emailService.sendSelectionEmail(app.email, app.name, tempPassword);
-      } else if (existingApp) {
-        // Already has internId — just update status and resend welcome if needed
-        existingApp.status = 'selected';
-        await existingApp.save();
-        await emailService.sendSelectionEmail(app.email, app.name, '[Check your original email for credentials]');
+
+        if (!internId) {
+          // Check if User already exists with this email
+          let existingUser = await User.findOne({ email: app.email.toLowerCase() });
+          if (existingUser) {
+            // Update existing user credentials and role
+            existingUser.role = 'intern';
+            existingUser.password = tempPassword;
+            existingUser.phone = existingUser.phone || app.phone || '';
+            existingUser.college = existingUser.college || app.college || '';
+            existingUser.department = existingUser.department || app.department || '';
+            existingUser.internshipStart = new Date();
+            existingUser.internshipEnd = new Date(Date.now() + (existingApp.duration || 8) * 7 * 24 * 3600 * 1000);
+            await existingUser.save();
+
+            internId = existingUser._id;
+          } else {
+            // Create brand new user
+            const newUser = await User.create({
+              name: app.name,
+              email: app.email,
+              phone: app.phone || '',
+              college: app.college || '',
+              department: app.department || '',
+              role: 'intern',
+              password: tempPassword,
+              internshipStart: new Date(),
+              internshipEnd: new Date(Date.now() + (existingApp.duration || 8) * 7 * 24 * 3600 * 1000)
+            });
+            internId = newUser._id;
+          }
+          existingApp.internId = internId;
+          existingApp.status = 'selected';
+          await existingApp.save();
+
+          // Create onboarding record if it doesn't exist yet
+          const existingOnboarding = await Onboarding.findOne({ internId });
+          if (!existingOnboarding) {
+            await Onboarding.create({ internId, applicationId: app._id });
+          }
+
+          await emailService.sendSelectionEmail(app.email, app.name, tempPassword);
+        } else {
+          // Already has internId — just update status and resend welcome if needed
+          existingApp.status = 'selected';
+          await existingApp.save();
+          await emailService.sendSelectionEmail(app.email, app.name, '[Check your original email for credentials]');
+        }
       }
     }
 
