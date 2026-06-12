@@ -96,11 +96,11 @@ const updateStatus = async (req, res) => {
     // ── Handle each status transition ──────────────────────
     if (status === 'shortlisted') {
       // Notify applicant they've been shortlisted
-      emailService.sendShortlisted(application.email, application.name);
+      await emailService.sendShortlisted(application.email, application.name);
 
     } else if (status === 'rejected') {
       // Send rejection email with optional reason
-      emailService.sendApplicationRejected(application.email, application.name, rejectionReason || notes || '');
+      await emailService.sendApplicationRejected(application.email, application.name, rejectionReason || notes || '');
 
     } else if (status === 'selected') {
       // Intern accepted after interview — create account + send credentials
@@ -150,7 +150,7 @@ const updateStatus = async (req, res) => {
       }
     } else {
       // Generic status update (on_hold, interview_scheduled, etc.)
-      emailService.sendStatusUpdate(application.email, application.name, status);
+      await emailService.sendStatusUpdate(application.email, application.name, status);
     }
 
     res.json({ success: true, application: normalizeAppPaths(application) });
