@@ -9,22 +9,26 @@ const normalizeAppPaths = (app) => {
   if (doc.resume) {
     const norm = doc.resume.replace(/\\/g, '/');
     const idx = norm.indexOf('/uploads/');
-    if (idx !== -1) {
-      doc.resume = norm.substring(idx);
-    } else if (norm.includes('uploads/')) {
-      doc.resume = '/' + norm.substring(norm.indexOf('uploads/'));
-    }
+    if (idx !== -1) doc.resume = norm.substring(idx);
+    else if (norm.includes('uploads/')) doc.resume = '/' + norm.substring(norm.indexOf('uploads/'));
   }
   if (doc.photo) {
     const norm = doc.photo.replace(/\\/g, '/');
     const idx = norm.indexOf('/uploads/');
-    if (idx !== -1) {
-      doc.photo = norm.substring(idx);
-    } else if (norm.includes('uploads/')) {
-      doc.photo = '/' + norm.substring(norm.indexOf('uploads/'));
-    }
+    if (idx !== -1) doc.photo = norm.substring(idx);
+    else if (norm.includes('uploads/')) doc.photo = '/' + norm.substring(norm.indexOf('uploads/'));
   }
   return doc;
+};
+
+// Generate intern password: first 3 letters of name + 3 random digits + special symbol
+const generateInternPassword = (name) => {
+  const prefix = (name || 'INT').replace(/[^a-zA-Z]/g, '').slice(0, 3).toLowerCase();
+  const digits = Math.floor(100 + Math.random() * 900); // 3 digits: 100-999
+  const symbols = ['@', '#', '$', '!', '&', '*'];
+  const symbol = symbols[Math.floor(Math.random() * symbols.length)];
+  // Capitalise first letter to meet common password rules
+  return prefix.charAt(0).toUpperCase() + prefix.slice(1) + digits + symbol;
 };
 
 // @desc  Get all applications
@@ -35,12 +39,18 @@ const getApplications = async (req, res) => {
     const query = {};
     if (status) query.status = status;
     if (department) query.department = department;
-    if (search) query.$or = [{ name: { $regex: search, $options: 'i' } }, { email: { $regex: search, $options: 'i' } }, { college: { $regex: search, $options: 'i' } }];
-    const applications = await Application.find(query).populate('reviewedBy', 'name').limit(+limit).skip((+page - 1) * +limit).sort({ createdAt: -1 });
+    if (search) query.$or = [
+      { name: { $regex: search, $options: 'i' } },
+      { email: { $regex: search, $options: 'i' } },
+      { college: { $regex: search, $options: 'i' } }
+    ];
+    const applications = await Application.find(query)
+      .populate('reviewedBy', 'name')
+      .limit(+limit).skip((+page - 1) * +limit)
+      .sort({ createdAt: -1 });
     const total = await Application.countDocuments(query);
     const stats = await Application.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]);
-    const mapped = applications.map(normalizeAppPaths);
-    res.json({ success: true, applications: mapped, total, pages: Math.ceil(total / +limit), stats });
+    res.json({ success: true, applications: applications.map(normalizeAppPaths), total, pages: Math.ceil(total / +limit), stats });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };
 
@@ -48,7 +58,9 @@ const getApplications = async (req, res) => {
 // @route GET /api/applications/:id
 const getApplication = async (req, res) => {
   try {
-    const app = await Application.findById(req.params.id).populate('reviewedBy', 'name email').populate('internId', 'name email');
+    const app = await Application.findById(req.params.id)
+      .populate('reviewedBy', 'name email')
+      .populate('internId', 'name email');
     if (!app) return res.status(404).json({ success: false, message: 'Application not found' });
     res.json({ success: true, application: normalizeAppPaths(app) });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
@@ -73,28 +85,50 @@ const submitApplication = async (req, res) => {
 // @route PATCH /api/applications/:id/status
 const updateStatus = async (req, res) => {
   try {
-    const { status, notes } = req.body;
-    const application = await Application.findByIdAndUpdate(req.params.id,
-      { status, notes, reviewedBy: req.user._id }, { new: true });
+    const { status, notes, rejectionReason } = req.body;
+    const application = await Application.findByIdAndUpdate(
+      req.params.id,
+      { status, notes: notes || rejectionReason, reviewedBy: req.user._id },
+      { new: true }
+    );
     if (!application) return res.status(404).json({ success: false, message: 'Application not found' });
 
-    // If selected, auto-create intern user account
-    if (status === 'selected' && !application.internId) {
-      const tempPassword = `IED@${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-      const intern = await User.create({
-        name: application.name, email: application.email, phone: application.phone,
-        college: application.college, department: application.department,
-        role: 'intern', password: tempPassword,
-        internshipStart: new Date(), internshipEnd: new Date(Date.now() + application.duration * 7 * 24 * 3600 * 1000)
-      });
-      application.internId = intern._id;
-      await application.save();
-      // Create onboarding record
-      await Onboarding.create({ internId: intern._id, applicationId: application._id });
-      await emailService.sendSelectionEmail(application.email, application.name, tempPassword);
+    // ── Handle each status transition ──────────────────────
+    if (status === 'shortlisted') {
+      // Notify applicant they've been shortlisted
+      emailService.sendShortlisted(application.email, application.name);
+
+    } else if (status === 'rejected') {
+      // Send rejection email with optional reason
+      emailService.sendApplicationRejected(application.email, application.name, rejectionReason || notes || '');
+
+    } else if (status === 'selected') {
+      // Intern accepted after interview — create account + send credentials
+      if (!application.internId) {
+        const tempPassword = generateInternPassword(application.name);
+        const intern = await User.create({
+          name: application.name,
+          email: application.email,
+          phone: application.phone || '',
+          college: application.college || '',
+          department: application.department || '',
+          role: 'intern',
+          password: tempPassword,
+          internshipStart: new Date(),
+          internshipEnd: new Date(Date.now() + (application.duration || 8) * 7 * 24 * 3600 * 1000)
+        });
+        application.internId = intern._id;
+        await application.save();
+        // Create onboarding record
+        await Onboarding.create({ internId: intern._id, applicationId: application._id });
+        // Send welcome email with login credentials
+        await emailService.sendSelectionEmail(application.email, application.name, tempPassword);
+      }
+    } else {
+      // Generic status update (on_hold, interview_scheduled, etc.)
+      emailService.sendStatusUpdate(application.email, application.name, status);
     }
 
-    await emailService.sendStatusUpdate(application.email, application.name, status);
     res.json({ success: true, application: normalizeAppPaths(application) });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };

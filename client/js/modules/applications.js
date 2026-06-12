@@ -34,41 +34,31 @@ window.ApplicationsModule = (() => {
 
   async function render() {
     const pc = document.getElementById('page-content');
-    const role = window.Auth?.user?.role;
-    const canAct = role === 'admin' || role === 'hr';
 
     pc.innerHTML = `
       <div class="page-header">
-        <h1 class="page-title">Applications</h1>
+        <div><h2>Applications</h2><p>Review and manage internship applications</p></div>
       </div>
       <!-- mini stat cards -->
-      <div id="app-stats" class="stats-grid" style="grid-template-columns:repeat(6,1fr)">
+      <div id="app-stats" class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))">
         ${Object.keys(STATUS_LABELS).map(() => `<div class="stat-card skeleton" style="height:80px"></div>`).join('')}
       </div>
       <!-- filter bar -->
       <div class="filter-bar" style="margin-top:1.5rem">
-        <div class="form-group" style="margin:0;flex:1">
-          <input type="text" id="app-search" class="form-control" placeholder="Search name, email, college…">
-        </div>
-        <select id="app-status-filter" class="form-control" style="width:180px">
+        <div class="search-input" style="flex:1"><i data-lucide="search"></i><input type="text" id="app-search" placeholder="Search name, email, college…"></div>
+        <select id="app-status-filter">
           <option value="">All Statuses</option>
           ${Object.entries(STATUS_LABELS).map(([k,v]) => `<option value="${k}">${v}</option>`).join('')}
-        </select>
-        <select id="app-dept-filter" class="form-control" style="width:160px">
-          <option value="">All Departments</option>
-          ${['Technology','Design','Marketing','Finance','Operations','HR'].map(d => `<option value="${d}">${d}</option>`).join('')}
         </select>
         <button class="btn btn-secondary" id="app-filter-btn"><i data-lucide="filter"></i> Filter</button>
       </div>
       <!-- table -->
-      <div class="table-container" style="margin-top:1rem">
+      <div class="table-container glass-card" style="margin-top:1rem">
         <table>
-          <thead>
-            <tr>
-              <th>Name</th><th>Email</th><th>College</th><th>Department</th>
-              <th>Duration</th><th>Status</th><th>Applied Date</th><th>Actions</th>
-            </tr>
-          </thead>
+          <thead><tr>
+            <th>Name</th><th>Email</th><th>College</th><th>Department</th>
+            <th>Duration</th><th>Status</th><th>Applied</th><th>Actions</th>
+          </tr></thead>
           <tbody id="apps-tbody">
             <tr><td colspan="8" style="text-align:center;padding:2rem"><div class="loading"><div class="spinner"></div></div></td></tr>
           </tbody>
@@ -76,10 +66,8 @@ window.ApplicationsModule = (() => {
       </div>`;
 
     lucide.createIcons();
-
     document.getElementById('app-filter-btn')?.addEventListener('click', _applyFilters);
     document.getElementById('app-search')?.addEventListener('keyup', e => { if (e.key === 'Enter') _applyFilters(); });
-
     await _loadApps();
   }
 
@@ -100,11 +88,9 @@ window.ApplicationsModule = (() => {
   function _applyFilters() {
     const search = document.getElementById('app-search')?.value.trim();
     const status = document.getElementById('app-status-filter')?.value;
-    const dept = document.getElementById('app-dept-filter')?.value;
     const params = {};
     if (search) params.search = search;
     if (status) params.status = status;
-    if (dept) params.department = dept;
     _loadApps(params);
   }
 
@@ -114,7 +100,7 @@ window.ApplicationsModule = (() => {
     apps.forEach(a => { if (counts[a.status] !== undefined) counts[a.status]++; });
 
     document.getElementById('app-stats').innerHTML = Object.entries(STATUS_LABELS).map(([k, v]) => `
-      <div class="stat-card" style="cursor:pointer" onclick="document.getElementById('app-status-filter').value='${k}';window.ApplicationsModule._applyFilters&&_applyFilters()">
+      <div class="stat-card" style="cursor:pointer" onclick="document.getElementById('app-status-filter').value='${k}';window.ApplicationsModule && render()">
         <div class="stat-info">
           <div class="stat-value" style="color:${STATUS_COLORS[k]}">${counts[k]}</div>
           <div class="stat-label" style="font-size:.75rem">${v}</div>
@@ -127,8 +113,7 @@ window.ApplicationsModule = (() => {
     const canAct = ['admin','hr'].includes(window.Auth?.user?.role);
 
     if (!apps.length) {
-      tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i data-lucide="file-text"></i><p>No applications found</p></div></td></tr>`;
-      lucide.createIcons();
+      tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📋</div><h3>No applications found</h3><p>Applications submitted by candidates will appear here</p></div></td></tr>`;
       return;
     }
 
@@ -136,24 +121,24 @@ window.ApplicationsModule = (() => {
       const nextStatuses = canAct ? (STATUS_FLOW[a.status] || []) : [];
       return `
       <tr data-id="${a._id}">
-        <td style="font-weight:500;color:var(--text-primary)">${a.name||a.applicantName||''}</td>
-        <td style="color:var(--text-secondary)">${a.email||''}</td>
-        <td>${a.college||'—'}</td>
-        <td>${a.department||'—'}</td>
-        <td>${a.duration ? a.duration + ' months' : '—'}</td>
+        <td style="font-weight:600">${a.name||''}</td>
+        <td style="color:var(--text-secondary);font-size:0.82rem">${a.email||''}</td>
+        <td style="font-size:0.82rem">${a.college||'—'}</td>
+        <td style="font-size:0.82rem">${a.department||'—'}</td>
+        <td style="font-size:0.82rem">${a.duration ? a.duration + ' wks' : '—'}</td>
         <td>
-          <span class="status-badge" style="background:${STATUS_COLORS[a.status]}22;color:${STATUS_COLORS[a.status]};border-color:${STATUS_COLORS[a.status]}44" id="status-badge-${a._id}">
+          <span class="status-badge" style="background:${STATUS_COLORS[a.status]}22;color:${STATUS_COLORS[a.status]};border:1px solid ${STATUS_COLORS[a.status]}44" id="status-badge-${a._id}">
             ${STATUS_LABELS[a.status] || a.status}
           </span>
         </td>
-        <td style="color:var(--text-muted)">${a.createdAt ? new Date(a.createdAt).toLocaleDateString('en-IN') : '—'}</td>
+        <td style="color:var(--text-muted);font-size:0.8rem">${a.createdAt ? new Date(a.createdAt).toLocaleDateString('en-IN') : '—'}</td>
         <td>
           <div style="display:flex;gap:.3rem;flex-wrap:wrap">
-            <button class="btn btn-sm btn-ghost view-btn" data-id="${a._id}"><i data-lucide="eye"></i></button>
+            <button class="btn btn-sm btn-ghost view-btn" data-id="${a._id}" title="View details"><i data-lucide="eye"></i></button>
             ${canAct ? nextStatuses.map(s => `
-              <button class="btn btn-sm ${s==='selected'?'btn-primary':s==='rejected'?'btn-danger':'btn-secondary'} status-btn"
-                data-id="${a._id}" data-status="${s}" title="${STATUS_LABELS[s]}">
-                ${_statusIcon(s)}
+              <button class="btn btn-sm ${s==='selected'?'btn-primary':s==='rejected'?'btn-danger':s==='shortlisted'?'btn-success':'btn-secondary'} status-btn"
+                data-id="${a._id}" data-status="${s}" data-name="${a.name}" data-email="${a.email}" title="${STATUS_LABELS[s]}">
+                ${_statusIcon(s)}&nbsp;${STATUS_LABELS[s]}
               </button>`).join('') : ''}
           </div>
         </td>
@@ -170,7 +155,7 @@ window.ApplicationsModule = (() => {
     });
 
     document.querySelectorAll('.status-btn').forEach(btn => {
-      btn.addEventListener('click', () => _changeStatus(btn.dataset.id, btn.dataset.status));
+      btn.addEventListener('click', () => _handleStatusChange(btn.dataset.id, btn.dataset.status, btn.dataset.name));
     });
   }
 
@@ -182,140 +167,143 @@ window.ApplicationsModule = (() => {
       rejected: '<i data-lucide="x"></i>',
       on_hold: '<i data-lucide="pause"></i>',
     };
-    return icons[s] || s;
+    return icons[s] || '';
   }
 
-  function _showDetails(app) {
-    const body = `
-      <div class="form-section">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:2rem">
-          <div style="flex:1;display:flex;flex-direction:column;gap:1rem">
-            <div class="form-row" style="gap:2rem">
-              <div style="flex:1">
-                <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.2rem">Full Name</div>
-                <div style="color:var(--text-primary);font-weight:500">${app.name||app.applicantName||'—'}</div>
-              </div>
-              <div style="flex:1">
-                <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.2rem">Email</div>
-                <div style="color:var(--text-primary)">${app.email||'—'}</div>
-              </div>
-            </div>
-            <div class="form-row" style="gap:2rem">
-              <div style="flex:1">
-                <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.2rem">Phone</div>
-                <div>${app.phone||'—'}</div>
-              </div>
-              <div style="flex:1">
-                <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.2rem">College / University</div>
-                <div>${app.college||'—'}</div>
-              </div>
-            </div>
-            <div class="form-row" style="gap:2rem">
-              <div style="flex:1">
-                <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.2rem">Department Applied</div>
-                <div>${app.department||'—'}</div>
-              </div>
-              <div style="flex:1">
-                <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.2rem">Duration</div>
-                <div>${app.duration ? app.duration + ' months' : '—'}</div>
-              </div>
-            </div>
-            <div class="form-row" style="gap:2rem">
-              <div style="flex:1">
-                <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.2rem">Status</div>
-                <span class="status-badge" style="background:${STATUS_COLORS[app.status]}22;color:${STATUS_COLORS[app.status]}">${STATUS_LABELS[app.status]||app.status}</span>
-              </div>
-              <div style="flex:1">
-                <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.2rem">Applied On</div>
-                <div>${app.createdAt ? new Date(app.createdAt).toLocaleString('en-IN') : '—'}</div>
-              </div>
-            </div>
-          </div>
-          <!-- Applicant Photo -->
-          <div style="width:120px;text-align:center;flex-shrink:0">
-            <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.4rem">Applicant Photo</div>
-            <div style="width:120px;height:140px;border-radius:var(--radius-md);border:1px solid var(--border-color);overflow:hidden;background:#f0f4f8;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-sm)">
-              ${app.photo ? `
-                <img src="${app.photo}" style="width:100%;height:100%;object-fit:cover;cursor:pointer" onclick="window.open('${app.photo}','_blank')" title="Click to view full image" />
-              ` : `
-                <i data-lucide="user" style="width:40px;height:40px;color:var(--text-muted)"></i>
-              `}
-            </div>
-          </div>
-        </div>
-
-        ${app.coverLetter || app.message ? `
-        <div style="margin-top:1.5rem">
-          <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.4rem">Cover Letter / Message</div>
-          <div style="background:#f4f6fa;border-radius:8px;padding:1rem;color:var(--text-secondary);font-size:.9rem;line-height:1.6;border:1px solid var(--border-color)">${app.coverLetter||app.message}</div>
-        </div>` : ''}
-
-        ${app.skills?.length ? `
-        <div style="margin-top:1.5rem">
-          <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.4rem">Skills</div>
-          <div style="display:flex;gap:.4rem;flex-wrap:wrap">${app.skills.map(s=>`<span class="status-badge status-active" style="background:rgba(3, 55, 122, 0.08);color:var(--accent-blue);font-weight:600;text-transform:none">${s}</span>`).join('')}</div>
-        </div>` : ''}
-
-        ${app.resume ? `
-        <div style="margin-top:1.5rem;border-top:1px solid var(--border-color);padding-top:1.5rem">
-          <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.5rem;display:flex;justify-content:space-between;align-items:center">
-            <span>Uploaded Resume</span>
-            <a href="${app.resume}" target="_blank" class="btn btn-secondary btn-sm" style="padding:4px 10px;font-size:0.75rem;border-radius:4px"><i data-lucide="external-link" style="width:12px;height:12px"></i> Open in New Tab</a>
-          </div>
-          <div style="width:100%;height:380px;border-radius:var(--radius-md);border:1px solid var(--border-color);overflow:hidden;background:#f0f4f8">
-            ${app.resume.toLowerCase().endsWith('.pdf') ? `
-              <iframe src="${app.resume}" style="width:100%;height:100%;border:none"></iframe>
-            ` : ['jpg','jpeg','png','gif','webp'].includes(app.resume.split('.').pop().toLowerCase()) ? `
-              <img src="${app.resume}" style="width:100%;height:100%;object-fit:contain;background:#f4f6fa" />
-            ` : `
-              <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);gap:8px">
-                <i data-lucide="file-text" style="width:48px;height:48px;color:var(--text-muted)"></i>
-                <span>Preview not available for this file type.</span>
-                <a href="${app.resume}" download class="btn btn-primary btn-sm"><i data-lucide="download"></i> Download to View</a>
-              </div>
-            `}
-          </div>
-        </div>
-        ` : `
-        <div style="margin-top:1.5rem;border-top:1px solid var(--border-color);padding-top:1.5rem;color:var(--text-muted);font-size:0.85rem">
-          <i data-lucide="alert-circle" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>No resume uploaded.
-        </div>`}
-      </div>`;
-
-    window.showModal('Application Details', body, `<button class="btn btn-secondary" onclick="window.closeModal()">Close</button>`);
-    lucide.createIcons();
-  }
-
-  async function _changeStatus(id, newStatus) {
-    if (newStatus === 'selected') {
-      if (!confirm(`Confirm: Mark this applicant as SELECTED? This will proceed to onboarding.`)) return;
+  // Central status change handler — shows reason modal for rejection, confirms for selection
+  async function _handleStatusChange(id, newStatus, name) {
+    if (newStatus === 'rejected') {
+      // Show reason modal
+      _showRejectionModal(id, name, 'application');
+      return;
     }
+
+    if (newStatus === 'selected') {
+      if (!confirm(`Accept ${name} as an intern?\n\nThis will:\n• Create their portal login account\n• Send login credentials to their email\n• Begin the onboarding process`)) return;
+    } else if (newStatus === 'shortlisted') {
+      if (!confirm(`Shortlist ${name}?\nAn email will be sent notifying them of the update.`)) return;
+    } else if (newStatus === 'interview_scheduled') {
+      window.showToast('Please schedule the interview in the Interviews tab!', 'info');
+      return;
+    }
+
+    await _changeStatus(id, newStatus);
+  }
+
+  // Show rejection reason modal
+  function _showRejectionModal(id, name, context) {
+    window.showModal(
+      `Reject ${context === 'application' ? 'Application' : 'After Interview'}`,
+      `<div style="display:flex;flex-direction:column;gap:16px">
+        <p style="color:var(--text-secondary)">You are about to reject <strong>${name}</strong>'s ${context}. An email will be sent to the applicant.</p>
+        <div class="form-group">
+          <label>Reason for Rejection <span style="color:var(--text-muted)">(optional — will be included in the email)</span></label>
+          <textarea id="rejection-reason" rows="4" placeholder="e.g. We had a high volume of applications this time. We encourage you to apply again in the future..."></textarea>
+        </div>
+      </div>`,
+      `<button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+       <button class="btn btn-danger" id="confirm-reject-btn"><i data-lucide="x"></i> Confirm Rejection</button>`
+    );
+    lucide.createIcons();
+    document.getElementById('confirm-reject-btn')?.addEventListener('click', async () => {
+      const reason = document.getElementById('rejection-reason')?.value.trim();
+      window.closeModal();
+      await _changeStatus(id, 'rejected', reason);
+    });
+  }
+
+  async function _changeStatus(id, newStatus, rejectionReason = '') {
     try {
-      await window.API.patch(`/applications/${id}/status`, { status: newStatus });
+      const body = { status: newStatus };
+      if (rejectionReason) body.rejectionReason = rejectionReason;
+      await window.API.patch(`/applications/${id}/status`, body);
+
       const badge = document.getElementById(`status-badge-${id}`);
       if (badge) {
         badge.textContent = STATUS_LABELS[newStatus] || newStatus;
         badge.style.background = STATUS_COLORS[newStatus] + '22';
         badge.style.color = STATUS_COLORS[newStatus];
         badge.style.borderColor = STATUS_COLORS[newStatus] + '44';
-        /* animate */
         badge.style.transform = 'scale(1.2)';
         setTimeout(() => { badge.style.transform = 'scale(1)'; }, 300);
       }
-      /* update local */
       const app = _apps.find(a => a._id === id);
       if (app) app.status = newStatus;
-      /* re-render row actions */
       _renderTable(_apps);
       _renderStats(_apps);
-      window.showToast(`Status updated to "${STATUS_LABELS[newStatus]}"`, 'success');
 
-      if (newStatus === 'interview_scheduled') {
-        window.showToast('Head to Interviews module to schedule the interview!', 'info');
+      const messages = {
+        shortlisted: '✅ Applicant shortlisted. Email sent.',
+        rejected: '❌ Rejection email sent to applicant.',
+        selected: '🎉 Intern account created! Login credentials emailed.',
+        on_hold: 'Application placed on hold.',
+        interview_scheduled: 'Status updated.',
+      };
+      window.showToast(messages[newStatus] || `Status updated to "${STATUS_LABELS[newStatus]}"`, newStatus === 'rejected' ? 'info' : 'success');
+
+      if (newStatus === 'shortlisted') {
+        window.showToast('Next step: Go to Interviews to schedule their interview.', 'info');
       }
     } catch (err) {
       window.showToast(err.message || 'Failed to update status', 'error');
     }
+  }
+
+  function _showDetails(app) {
+    const body = `
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:2rem;flex-wrap:wrap">
+          <div style="flex:1;display:flex;flex-direction:column;gap:1rem;min-width:200px">
+            <div class="form-row">
+              <div><div style="font-size:.75rem;color:var(--text-muted)">Full Name</div><div style="font-weight:600">${app.name||'—'}</div></div>
+              <div><div style="font-size:.75rem;color:var(--text-muted)">Email</div><div>${app.email||'—'}</div></div>
+            </div>
+            <div class="form-row">
+              <div><div style="font-size:.75rem;color:var(--text-muted)">Phone</div><div>${app.phone||'—'}</div></div>
+              <div><div style="font-size:.75rem;color:var(--text-muted)">College</div><div>${app.college||'—'}</div></div>
+            </div>
+            <div class="form-row">
+              <div><div style="font-size:.75rem;color:var(--text-muted)">Department</div><div>${app.department||'—'}</div></div>
+              <div><div style="font-size:.75rem;color:var(--text-muted)">Duration</div><div>${app.duration ? app.duration + ' weeks' : '—'}</div></div>
+            </div>
+            <div class="form-row">
+              <div>
+                <div style="font-size:.75rem;color:var(--text-muted)">Status</div>
+                <span class="status-badge" style="background:${STATUS_COLORS[app.status]}22;color:${STATUS_COLORS[app.status]}">${STATUS_LABELS[app.status]||app.status}</span>
+              </div>
+              <div><div style="font-size:.75rem;color:var(--text-muted)">Applied On</div><div>${app.createdAt ? new Date(app.createdAt).toLocaleString('en-IN') : '—'}</div></div>
+            </div>
+          </div>
+          <div style="text-align:center;flex-shrink:0">
+            <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.4rem">Photo</div>
+            <div style="width:110px;height:130px;border-radius:var(--radius-md);border:1px solid var(--border-color);overflow:hidden;background:#f0f4f8;display:flex;align-items:center;justify-content:center">
+              ${app.photo ? `<img src="${app.photo}" style="width:100%;height:100%;object-fit:cover;cursor:pointer" onclick="window.open('${app.photo}','_blank')" />` : `<i data-lucide="user" style="width:40px;height:40px;color:var(--text-muted)"></i>`}
+            </div>
+          </div>
+        </div>
+
+        ${app.coverLetter || app.message ? `
+        <div style="margin-top:1.5rem">
+          <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.4rem">Cover Letter</div>
+          <div style="background:#f4f6fa;border-radius:8px;padding:1rem;color:var(--text-secondary);font-size:.9rem;line-height:1.6;border:1px solid var(--border-color)">${app.coverLetter||app.message}</div>
+        </div>` : ''}
+
+        ${app.resume ? `
+        <div style="margin-top:1.5rem;border-top:1px solid var(--border-color);padding-top:1.5rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+            <span style="font-size:.75rem;color:var(--text-muted)">Resume</span>
+            <a href="${app.resume}" target="_blank" class="btn btn-secondary btn-sm"><i data-lucide="external-link" style="width:12px;height:12px"></i> Open</a>
+          </div>
+          <div style="width:100%;height:360px;border-radius:var(--radius-md);border:1px solid var(--border-color);overflow:hidden;background:#f0f4f8">
+            ${app.resume.toLowerCase().endsWith('.pdf') ? `<iframe src="${app.resume}" style="width:100%;height:100%;border:none"></iframe>` :
+              ['jpg','jpeg','png','gif','webp'].includes(app.resume.split('.').pop().toLowerCase()) ? `<img src="${app.resume}" style="width:100%;height:100%;object-fit:contain" />` :
+              `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);gap:8px"><i data-lucide="file-text" style="width:48px;height:48px"></i><span>Preview unavailable</span><a href="${app.resume}" download class="btn btn-primary btn-sm"><i data-lucide="download"></i> Download</a></div>`}
+          </div>
+        </div>` : ''}
+      </div>`;
+
+    window.showModal('Application Details', body, `<button class="btn btn-secondary" onclick="closeModal()">Close</button>`);
+    lucide.createIcons();
   }
 
   return { render };

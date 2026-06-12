@@ -30,27 +30,25 @@ window.InterviewsModule = (() => {
 
     pc.innerHTML = `
       <div class="page-header">
-        <h1 class="page-title">Interviews</h1>
+        <div><h2>Interviews</h2><p>Schedule and manage candidate interviews</p></div>
         <div class="page-actions">
           ${canManage ? `<button class="btn btn-primary" id="schedule-btn"><i data-lucide="calendar-plus"></i> Schedule Interview</button>` : ''}
         </div>
       </div>
       <!-- stats -->
-      <div id="iv-stats" class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div id="iv-stats" class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
         ${[1,2,3,4].map(() => `<div class="stat-card skeleton" style="height:90px"></div>`).join('')}
       </div>
       <!-- table -->
-      <div class="table-container" style="margin-top:1.5rem">
+      <div class="table-container glass-card" style="margin-top:1.5rem">
         <table>
-          <thead>
-            <tr>
-              <th>Candidate</th><th>Date</th><th>Time</th><th>Mode</th>
-              <th>Meet Link</th><th>Interviewer</th><th>Status</th>
-              <th>Score</th><th>Result</th><th>Actions</th>
-            </tr>
-          </thead>
+          <thead><tr>
+            <th>Candidate</th><th>Date & Time</th><th>Mode</th>
+            <th>Meet Link</th><th>Interviewer</th><th>Status</th>
+            <th>Score</th><th>Result</th><th>Actions</th>
+          </tr></thead>
           <tbody id="iv-tbody">
-            <tr><td colspan="10" style="text-align:center;padding:2rem"><div class="loading"><div class="spinner"></div></div></td></tr>
+            <tr><td colspan="9" style="text-align:center;padding:2rem"><div class="loading"><div class="spinner"></div></div></td></tr>
           </tbody>
         </table>
       </div>`;
@@ -73,7 +71,7 @@ window.InterviewsModule = (() => {
       _renderTable(_interviews);
     } catch (err) {
       document.getElementById('iv-tbody').innerHTML =
-        `<tr><td colspan="10" style="text-align:center;color:#ff5252">Failed to load: ${err.message}</td></tr>`;
+        `<tr><td colspan="9" style="text-align:center;color:#ff5252">Failed to load: ${err.message}</td></tr>`;
       window.showToast(err.message, 'error');
     }
   }
@@ -94,10 +92,10 @@ window.InterviewsModule = (() => {
       else if (iv.status === 'cancelled') counts.cancelled++;
     });
     const defs = [
-      { key: 'scheduled', label: 'Scheduled', icon: 'calendar', color: 'blue' },
-      { key: 'completed', label: 'Completed', icon: 'check-circle', color: 'green' },
-      { key: 'pending', label: 'Pending', icon: 'clock', color: 'gold' },
-      { key: 'cancelled', label: 'Cancelled', icon: 'x-circle', color: 'red' },
+      { key: 'scheduled', label: 'Scheduled',  icon: 'calendar',     color: 'blue' },
+      { key: 'completed', label: 'Completed',  icon: 'check-circle', color: 'green' },
+      { key: 'pending',   label: 'Pending',    icon: 'clock',        color: 'gold' },
+      { key: 'cancelled', label: 'Cancelled',  icon: 'x-circle',     color: 'red' },
     ];
     document.getElementById('iv-stats').innerHTML = defs.map(d => `
       <div class="stat-card">
@@ -116,42 +114,55 @@ window.InterviewsModule = (() => {
     const canManage = ['admin','hr'].includes(window.Auth?.user?.role);
 
     if (!ivs.length) {
-      tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><i data-lucide="calendar"></i><p>No interviews scheduled</p></div></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">📅</div><h3>No interviews scheduled</h3><p>Schedule an interview for a shortlisted candidate</p></div></td></tr>`;
       lucide.createIcons();
       return;
     }
 
     tbody.innerHTML = ivs.map(iv => {
       const isFuture = iv.scheduledAt && new Date(iv.scheduledAt) > new Date();
-      const modeBadge = {
-        zoom: 'blue', google_meet: 'green', offline: 'gold', phone: 'purple'
-      }[iv.mode] || 'blue';
+      const modeBadge = { zoom: 'blue', google_meet: 'green', offline: 'gold', phone: 'purple' }[iv.mode] || 'blue';
       const resultColor = iv.result === 'pass' ? '#00e676' : iv.result === 'fail' ? '#ff5252' : '#94a3b8';
+      const candidateName = iv.applicationId?.name || iv.candidateName || '—';
+      const isCompleted = iv.status === 'completed';
+      // Show accept/reject only for completed interviews with a pass/fail result
+      // (or even without result — let admin decide)
+      const appStatus = iv.applicationId?.status;
+      const alreadyActed = appStatus === 'selected' || appStatus === 'rejected';
 
       return `
       <tr>
-        <td style="font-weight:500;color:var(--text-primary)">${iv.applicationId?.name || iv.candidateName || '—'}</td>
-        <td>${_fmtDate(iv.scheduledAt)}</td>
+        <td style="font-weight:600">${candidateName}</td>
         <td>
-          ${_fmtTime(iv.scheduledAt)}
+          ${_fmtDate(iv.scheduledAt || iv.scheduledDate)}<br>
+          <span style="color:var(--text-muted);font-size:.8rem">${_fmtTime(iv.scheduledAt)}</span>
           ${isFuture ? `<div style="font-size:.7rem;color:#00d4ff" id="cd-${iv._id}">Loading…</div>` : ''}
         </td>
-        <td><span class="status-badge status-${modeBadge}">${iv.mode||'—'}</span></td>
+        <td><span class="status-badge status-${modeBadge}">${(iv.mode||'—').replace('_',' ')}</span></td>
         <td>
           ${iv.meetLink ? `
             <div style="display:flex;align-items:center;gap:.4rem">
-              <a href="${iv.meetLink}" target="_blank" class="btn btn-sm btn-ghost" title="Open"><i data-lucide="external-link"></i></a>
-              <button class="btn btn-sm btn-ghost copy-link-btn" data-link="${iv.meetLink}" title="Copy"><i data-lucide="copy"></i></button>
+              <a href="${iv.meetLink}" target="_blank" class="btn btn-sm btn-ghost"><i data-lucide="external-link"></i></a>
+              <button class="btn btn-sm btn-ghost copy-link-btn" data-link="${iv.meetLink}"><i data-lucide="copy"></i></button>
             </div>` : '—'}
         </td>
-        <td>${iv.interviewer || iv.interviewerId?.name || '—'}</td>
+        <td style="font-size:.85rem">${iv.interviewer || iv.interviewedBy?.name || '—'}</td>
         <td><span class="status-badge status-${iv.status}">${iv.status||'—'}</span></td>
-        <td>${iv.score != null ? iv.score + '/10' : '—'}</td>
-        <td style="color:${resultColor};font-weight:500">${iv.result ? iv.result.charAt(0).toUpperCase()+iv.result.slice(1) : '—'}</td>
+        <td><strong>${iv.score != null ? iv.score + '/10' : '—'}</strong></td>
+        <td style="color:${resultColor};font-weight:600">${iv.result && iv.result !== 'pending' ? iv.result.charAt(0).toUpperCase()+iv.result.slice(1) : '—'}</td>
         <td>
-          <div style="display:flex;gap:.3rem">
-            ${canManage ? `<button class="btn btn-sm btn-secondary edit-iv-btn" data-id="${iv._id}" title="Edit/Review"><i data-lucide="edit-2"></i></button>` : ''}
-            ${canManage && iv.status !== 'cancelled' ? `<button class="btn btn-sm btn-danger cancel-iv-btn" data-id="${iv._id}" title="Cancel"><i data-lucide="x"></i></button>` : ''}
+          <div style="display:flex;gap:.3rem;flex-wrap:wrap">
+            ${canManage ? `<button class="btn btn-sm btn-secondary edit-iv-btn" data-id="${iv._id}" title="Edit / Record Result"><i data-lucide="edit-2"></i></button>` : ''}
+            ${canManage && isCompleted && !alreadyActed ? `
+              <button class="btn btn-sm btn-success accept-iv-btn" data-id="${iv._id}" data-name="${candidateName}" title="Accept Intern — create account & send credentials">
+                <i data-lucide="user-check"></i> Accept
+              </button>
+              <button class="btn btn-sm btn-danger reject-iv-btn" data-id="${iv._id}" data-name="${candidateName}" title="Reject after interview">
+                <i data-lucide="user-x"></i> Reject
+              </button>
+            ` : ''}
+            ${canManage && iv.status !== 'cancelled' && !isCompleted ? `<button class="btn btn-sm btn-danger cancel-iv-btn" data-id="${iv._id}"><i data-lucide="x"></i></button>` : ''}
+            ${alreadyActed ? `<span class="status-badge" style="background:${appStatus==='selected'?'#00e67622':'#ff525222'};color:${appStatus==='selected'?'#00e676':'#ff5252'}">${appStatus==='selected'?'Accepted':'Rejected'}</span>` : ''}
           </div>
         </td>
       </tr>`;
@@ -159,7 +170,7 @@ window.InterviewsModule = (() => {
 
     lucide.createIcons();
 
-    /* countdown timers */
+    /* Countdown timers */
     ivs.filter(iv => iv.scheduledAt && new Date(iv.scheduledAt) > new Date()).forEach(iv => {
       const el = document.getElementById(`cd-${iv._id}`);
       if (!el) return;
@@ -174,12 +185,14 @@ window.InterviewsModule = (() => {
       _countdownTimers.push(t);
     });
 
+    /* Copy meet link */
     document.querySelectorAll('.copy-link-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         navigator.clipboard?.writeText(btn.dataset.link).then(() => window.showToast('Link copied!', 'success'));
       });
     });
 
+    /* Edit interview */
     document.querySelectorAll('.edit-iv-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         const iv = _interviews.find(i => i._id === btn.dataset.id);
@@ -189,6 +202,7 @@ window.InterviewsModule = (() => {
       });
     });
 
+    /* Cancel interview */
     document.querySelectorAll('.cancel-iv-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         if (!confirm('Cancel this interview?')) return;
@@ -199,6 +213,60 @@ window.InterviewsModule = (() => {
         } catch (err) { window.showToast(err.message, 'error'); }
       });
     });
+
+    /* Accept intern after interview */
+    document.querySelectorAll('.accept-iv-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const name = btn.dataset.name;
+        if (!confirm(`Accept ${name} as an intern?\n\nThis will:\n• Create their portal login account\n• Send login credentials (User ID + Password) to their email`)) return;
+        _decideInterview(btn.dataset.id, true, '');
+      });
+    });
+
+    /* Reject intern after interview */
+    document.querySelectorAll('.reject-iv-btn').forEach(btn => {
+      btn.addEventListener('click', () => _showInterviewRejectModal(btn.dataset.id, btn.dataset.name));
+    });
+  }
+
+  function _showInterviewRejectModal(ivId, name) {
+    window.showModal(
+      'Reject After Interview',
+      `<div style="display:flex;flex-direction:column;gap:16px">
+        <p style="color:var(--text-secondary)">You are about to reject <strong>${name}</strong> after their interview. An email with the outcome will be sent.</p>
+        <div class="form-group">
+          <label>Feedback / Reason <span style="color:var(--text-muted)">(optional — sent in email)</span></label>
+          <textarea id="iv-rejection-reason" rows="4" placeholder="e.g. We appreciated your time but we found a better fit for this role at this time..."></textarea>
+        </div>
+      </div>`,
+      `<button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+       <button class="btn btn-danger" id="confirm-iv-reject-btn"><i data-lucide="user-x"></i> Confirm Rejection</button>`
+    );
+    lucide.createIcons();
+    document.getElementById('confirm-iv-reject-btn')?.addEventListener('click', () => {
+      const reason = document.getElementById('iv-rejection-reason')?.value.trim();
+      window.closeModal();
+      _decideInterview(ivId, false, reason);
+    });
+  }
+
+  async function _decideInterview(ivId, accept, rejectionReason) {
+    try {
+      const payload = accept
+        ? { status: 'completed', result: 'pass', acceptIntern: true }
+        : { status: 'completed', result: 'fail', rejectIntern: true, rejectionReason };
+
+      await window.API.put(`/interviews/${ivId}`, payload);
+
+      if (accept) {
+        window.showToast('🎉 Intern accepted! Account created & credentials emailed.', 'success');
+      } else {
+        window.showToast('Rejection email sent to candidate.', 'info');
+      }
+      _loadInterviews();
+    } catch (err) {
+      window.showToast(err.message || 'Failed to update interview', 'error');
+    }
   }
 
   function _openScheduleModal(iv) {
@@ -215,28 +283,28 @@ window.InterviewsModule = (() => {
       <div class="form-section">
         ${!isEdit ? `<div class="form-group">
           <label>Candidate (Shortlisted Application) *</label>
-          <select id="iv-app" class="form-control">
+          <select id="iv-app">
             <option value="">Select candidate…</option>
-            ${appOptions}
+            ${appOptions || '<option disabled>No shortlisted candidates</option>'}
           </select>
         </div>` : `<div class="form-group">
           <label>Candidate</label>
-          <input class="form-control" value="${iv?.applicationId?.name||iv?.candidateName||''}" disabled>
+          <input value="${iv?.applicationId?.name||iv?.candidateName||''}" disabled style="opacity:0.7">
         </div>`}
         <div class="form-row">
           <div class="form-group">
             <label>Date *</label>
-            <input type="date" id="iv-date" class="form-control" value="${scheduledDate}">
+            <input type="date" id="iv-date" value="${scheduledDate}">
           </div>
           <div class="form-group">
             <label>Time *</label>
-            <input type="time" id="iv-time" class="form-control" value="${scheduledTime}">
+            <input type="time" id="iv-time" value="${scheduledTime}">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label>Mode *</label>
-            <select id="iv-mode" class="form-control">
+            <select id="iv-mode">
               <option value="zoom" ${iv?.mode==='zoom'?'selected':''}>Zoom</option>
               <option value="google_meet" ${iv?.mode==='google_meet'?'selected':''}>Google Meet</option>
               <option value="offline" ${iv?.mode==='offline'?'selected':''}>Offline</option>
@@ -245,20 +313,20 @@ window.InterviewsModule = (() => {
           </div>
           <div class="form-group">
             <label>Interviewer Name</label>
-            <input type="text" id="iv-interviewer" class="form-control" value="${iv?.interviewer||''}" placeholder="Name of interviewer">
+            <input type="text" id="iv-interviewer" value="${iv?.interviewer||''}" placeholder="Name of interviewer">
           </div>
         </div>
         <div class="form-group" id="meet-link-group" style="${(!iv?.mode || iv?.mode==='zoom' || iv?.mode==='google_meet') ? '' : 'display:none'}">
           <label>Meet Link</label>
-          <input type="url" id="iv-link" class="form-control" value="${iv?.meetLink||''}" placeholder="https://meet.google.com/…">
+          <input type="url" id="iv-link" value="${iv?.meetLink||''}" placeholder="https://meet.google.com/…">
         </div>
         ${isEdit ? `
-        <hr style="border-color:rgba(255,255,255,0.08);margin:1rem 0">
-        <h4 style="color:var(--text-primary);margin-bottom:.75rem">Interview Result (after completion)</h4>
+        <hr style="border-color:var(--border-color);margin:1.5rem 0">
+        <h4 style="margin-bottom:.75rem">Interview Result</h4>
         <div class="form-row">
           <div class="form-group">
             <label>Status</label>
-            <select id="iv-status" class="form-control">
+            <select id="iv-status">
               <option value="scheduled" ${iv?.status==='scheduled'?'selected':''}>Scheduled</option>
               <option value="completed" ${iv?.status==='completed'?'selected':''}>Completed</option>
               <option value="cancelled" ${iv?.status==='cancelled'?'selected':''}>Cancelled</option>
@@ -266,27 +334,26 @@ window.InterviewsModule = (() => {
           </div>
           <div class="form-group">
             <label>Result</label>
-            <select id="iv-result" class="form-control">
-              <option value="" ${!iv?.result?'selected':''}>—</option>
-              <option value="pass" ${iv?.result==='pass'?'selected':''}>Pass</option>
-              <option value="fail" ${iv?.result==='fail'?'selected':''}>Fail</option>
+            <select id="iv-result">
+              <option value="" ${!iv?.result||iv?.result==='pending'?'selected':''}>— Pending —</option>
+              <option value="pass" ${iv?.result==='pass'?'selected':''}>Pass ✅</option>
+              <option value="fail" ${iv?.result==='fail'?'selected':''}>Fail ❌</option>
             </select>
           </div>
         </div>
         <div class="form-group">
-          <label>Score (1-10): <span id="score-val">${iv?.score??5}</span></label>
-          <input type="range" id="iv-score" min="1" max="10" step="1" value="${iv?.score??5}" class="form-control"
-            oninput="document.getElementById('score-val').textContent=this.value" style="padding:.2rem 0">
+          <label>Score (1–10): <strong id="score-val">${iv?.score??5}</strong></label>
+          <input type="range" id="iv-score" min="1" max="10" step="1" value="${iv?.score??5}" oninput="document.getElementById('score-val').textContent=this.value">
         </div>
         <div class="form-group">
           <label>Feedback / Notes</label>
-          <textarea id="iv-feedback" class="form-control" rows="3" placeholder="Interview feedback…">${iv?.feedback||''}</textarea>
+          <textarea id="iv-feedback" rows="3" placeholder="Interview feedback…">${iv?.feedback||''}</textarea>
         </div>` : ''}
       </div>`;
 
     const footer = `
-      <button class="btn btn-secondary" onclick="window.closeModal()">Cancel</button>
-      <button class="btn btn-primary" id="save-iv-btn">${isEdit ? 'Update Interview' : 'Schedule Interview'}</button>`;
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="save-iv-btn">${isEdit ? 'Update Interview' : 'Schedule & Notify Candidate'}</button>`;
 
     window.showModal(isEdit ? 'Update Interview' : 'Schedule Interview', body, footer);
     lucide.createIcons();
@@ -321,28 +388,29 @@ window.InterviewsModule = (() => {
       payload.applicationId = appId;
     } else {
       payload.status = document.getElementById('iv-status')?.value;
-      payload.result = document.getElementById('iv-result')?.value;
+      payload.result = document.getElementById('iv-result')?.value || 'pending';
       payload.score = parseInt(document.getElementById('iv-score')?.value) || undefined;
       payload.feedback = document.getElementById('iv-feedback')?.value.trim();
     }
 
     const btn = document.getElementById('save-iv-btn');
-    btn.disabled = true; btn.textContent = 'Saving…';
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
 
     try {
       if (isEdit) {
         await window.API.put(`/interviews/${_editingId}`, payload);
-        window.showToast('Interview updated successfully', 'success');
+        window.showToast('Interview updated', 'success');
       } else {
         await window.API.post('/interviews', payload);
-        window.showToast('Interview scheduled successfully', 'success');
+        window.showToast('Interview scheduled! Candidate notified by email.', 'success');
       }
       window.closeModal();
       _loadInterviews();
     } catch (err) {
       window.showToast(err.message || 'Failed to save interview', 'error');
       btn.disabled = false;
-      btn.textContent = isEdit ? 'Update Interview' : 'Schedule Interview';
+      btn.textContent = isEdit ? 'Update Interview' : 'Schedule & Notify Candidate';
     }
   }
 

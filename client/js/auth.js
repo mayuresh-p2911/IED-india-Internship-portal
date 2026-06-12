@@ -174,7 +174,7 @@ document.getElementById('toggle-pass').addEventListener('click', () => {
 });
 
 // ── Page Navigation (Login / Signup / Apply) ──────────────
-document.getElementById('show-signup').addEventListener('click', (e) => {
+document.getElementById('show-signup')?.addEventListener('click', (e) => {
   e.preventDefault();
   resetCaptcha();
   document.getElementById('login-page').classList.add('hidden');
