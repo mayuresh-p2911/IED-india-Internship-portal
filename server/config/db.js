@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    const uri = process.env.MONGODB_URI || 'mongodb://mayure12sh12_db_user:mAyUrEsH2911@ac-vhu35jb-shard-00-00.isglc46.mongodb.net:27017,ac-vhu35jb-shard-00-01.isglc46.mongodb.net:27017,ac-vhu35jb-shard-00-02.isglc46.mongodb.net:27017/ied-ims?ssl=true&replicaSet=atlas-113or1-shard-0&authSource=admin&retryWrites=true&w=majority';
+    const uri = process.env.MONGODB_URI || 'mongodb+srv://mayure12sh12_db_user:mAyUrEsH2911@iedindia1.isglc46.mongodb.net/ied-ims?appName=iedindia1';
     console.log('[INFO] Connecting to MongoDB...');
     const conn = await mongoose.connect(uri, {
       serverSelectionTimeoutMS: 5000,
