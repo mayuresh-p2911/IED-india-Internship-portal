@@ -70,35 +70,6 @@ app.get('/uploads/*', async (req, res) => {
 
 app.use(express.static(path.join(__dirname, '../client')));
 
-// Test Email Route
-app.get('/api/test-email', async (req, res) => {
-  const emailService = require('./services/email.service');
-  const to = req.query.to || 'gannuandkitty@gmail.com';
-  try {
-    const result = await emailService.sendApplicationReceived(to, 'Test Candidate');
-    res.json({
-      success: true,
-      message: 'Test email attempt completed.',
-      result,
-      env: {
-        EMAIL_HOST: process.env.EMAIL_HOST,
-        EMAIL_PORT: process.env.EMAIL_PORT,
-        EMAIL_USER: process.env.EMAIL_USER,
-        EMAIL_PASS_CONFIGURED: !!process.env.EMAIL_PASS,
-        RESEND_API_KEY_CONFIGURED: !!process.env.RESEND_API_KEY,
-        CLIENT_URL: process.env.CLIENT_URL,
-        NODE_ENV: process.env.NODE_ENV,
-      }
-    });
-  } catch (err) {
-    res.status(500).json({
-      success: false,
-      error: err.message,
-      stack: err.stack
-    });
-  }
-});
-
 // API Routes
 app.use('/api/auth',          require('./routes/auth.routes'));
 app.use('/api/users',         require('./routes/users.routes'));
