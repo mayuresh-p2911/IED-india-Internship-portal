@@ -1,61 +1,68 @@
-const nodemailer = require('nodemailer');
+/**
+ * IED India — Email Service
+ * Uses Resend API (HTTPS) instead of SMTP.
+ * Vercel blocks all SMTP ports, so SMTP never works on Vercel.
+ * Resend API works over HTTPS and is free (3,000 emails/month).
+ */
+const https = require('https');
 
-// ── Transporter ─────────────────────────────────────────────
-const createTransporter = () => {
-  const user = process.env.EMAIL_USER;
-  const pass = process.env.EMAIL_PASS;
+const BASE = process.env.CLIENT_URL || 'https://ied-india-internship-portal.vercel.app';
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
-  if (!user || !pass || user === 'your-email@gmail.com' || pass === 'your-app-password') {
-    return null; // no credentials — mock mode
-  }
+// The "from" address. With free Resend (no custom domain), you must use:
+//   onboarding@resend.dev  (works for sending to any address)
+// Once you verify your own domain in Resend dashboard, change this to your domain email.
+const FROM_ADDRESS = process.env.EMAIL_FROM || 'IED India <onboarding@resend.dev>';
 
-  const host = process.env.EMAIL_HOST || 'smtp.gmail.com';
-  // Default to port 465 (SSL). If you want port 587, set EMAIL_PORT=587 in env.
-  const port = parseInt(process.env.EMAIL_PORT) || 465;
-  const secure = port === 465; // true for 465 (SSL), false for 587 (STARTTLS)
+// ── Core send via Resend API ────────────────────────────────
+const sendMail = (to, subject, html) => {
+  return new Promise((resolve) => {
+    if (!RESEND_API_KEY) {
+      console.log(`📧 [MOCK EMAIL] To: ${to} | Subject: ${subject}`);
+      console.log('   → Add RESEND_API_KEY to Vercel env vars to send real emails.');
+      return resolve({ mocked: true });
+    }
 
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure,
-    auth: { user, pass },
-    tls: { rejectUnauthorized: false },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 15000,
+    const body = JSON.stringify({ from: FROM_ADDRESS, to: [to], subject, html });
+
+    const options = {
+      hostname: 'api.resend.com',
+      port: 443,
+      path: '/emails',
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(body),
+      },
+    };
+
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        if (res.statusCode === 200 || res.statusCode === 201) {
+          console.log(`📧 [EMAIL SENT] To: ${to} | Subject: ${subject}`);
+          resolve(JSON.parse(data));
+        } else {
+          console.error(`❌ [EMAIL ERROR] Status ${res.statusCode} | To: ${to}`);
+          console.error('   Response:', data);
+          resolve(null);
+        }
+      });
+    });
+
+    req.on('error', (err) => {
+      console.error(`❌ [EMAIL ERROR] To: ${to} | ${err.message}`);
+      resolve(null);
+    });
+
+    req.write(body);
+    req.end();
   });
 };
 
-// ── Core send function ──────────────────────────────────────
-const sendMail = async (to, subject, html) => {
-  const user = process.env.EMAIL_USER;
-  try {
-    const transporter = createTransporter();
-    if (!transporter) {
-      console.log(`📧 [MOCK EMAIL] To: ${to} | Subject: ${subject}`);
-      console.log('   -> Set EMAIL_USER + EMAIL_PASS (Gmail App Password) in Vercel env vars to send real emails.');
-      return { mocked: true };
-    }
-
-    // Gmail REQUIRES the "from" address to match the authenticated EMAIL_USER exactly.
-    // Using a different "from" (like noreply@ied.com) will cause Gmail to reject the send.
-    const fromName = process.env.EMAIL_FROM_NAME || 'IED India';
-    const from = `"${fromName}" <${user}>`;
-
-    const info = await transporter.sendMail({ from, to, subject, html });
-    console.log(`📧 [EMAIL SENT] To: ${to} | Subject: ${subject} | MsgId: ${info.messageId}`);
-    return info;
-  } catch (err) {
-    console.error(`❌ [EMAIL ERROR] To: ${to} | Subject: ${subject}`);
-    console.error('   code:', err.code, '| msg:', err.message);
-    if (err.response) console.error('   SMTP:', err.response);
-    return null; // never throw — email failure must not break API response
-  }
-};
-
 // ── HTML helpers ────────────────────────────────────────────
-const BASE = process.env.CLIENT_URL || 'https://ied-india-internship-portal.vercel.app';
-
 const _wrap = (content) => `
   <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
     <div style="background:linear-gradient(135deg,#022654 0%,#073161 100%);padding:28px 32px;text-align:center">
@@ -64,7 +71,7 @@ const _wrap = (content) => `
     </div>
     <div style="padding:32px">${content}</div>
     <div style="background:#f0f4f8;padding:16px 32px;text-align:center">
-      <p style="color:#94a3b8;font-size:11px;margin:0">IED India Pvt Ltd &nbsp;|&nbsp; Internship Management System &nbsp;|&nbsp; <a href="${BASE}" style="color:#03377A">Portal</a></p>
+      <p style="color:#94a3b8;font-size:11px;margin:0">IED India Pvt Ltd &nbsp;|&nbsp; <a href="${BASE}" style="color:#03377A">Portal</a></p>
     </div>
   </div>`;
 
@@ -80,7 +87,6 @@ const emailService = {
       <h2 style="color:#022654;margin-top:0">Application Received!</h2>
       <p style="color:#475569">Dear <strong>${name}</strong>,</p>
       <p style="color:#475569;line-height:1.7">Thank you for applying to intern at <strong>IED India Pvt Ltd</strong>. We have received your application and our HR team will review it shortly.</p>
-      <p style="color:#475569;line-height:1.7">We will notify you of any updates via email. Please keep an eye on your inbox.</p>
       <p style="color:#94a3b8;font-size:13px;margin-top:24px">Warm regards,<br><strong>IED India HR Team</strong></p>
     `)),
 
@@ -89,8 +95,7 @@ const emailService = {
     _wrap(`
       <h2 style="color:#022654;margin-top:0">Congratulations, You have been Shortlisted!</h2>
       <p style="color:#475569">Dear <strong>${name}</strong>,</p>
-      <p style="color:#475569;line-height:1.7">We are pleased to inform you that your application to intern at <strong>IED India Pvt Ltd</strong> has been <strong style="color:#03377A">shortlisted</strong> for further review.</p>
-      <p style="color:#475569;line-height:1.7">Our team will be scheduling an interview with you soon. Please watch your email for the interview details.</p>
+      <p style="color:#475569;line-height:1.7">Your application to intern at <strong>IED India Pvt Ltd</strong> has been <strong style="color:#03377A">shortlisted</strong>. Our team will schedule an interview with you soon.</p>
       <p style="color:#94a3b8;font-size:13px;margin-top:24px">Warm regards,<br><strong>IED India HR Team</strong></p>
     `)),
 
@@ -99,9 +104,9 @@ const emailService = {
     _wrap(`
       <h2 style="color:#022654;margin-top:0">Application Update</h2>
       <p style="color:#475569">Dear <strong>${name}</strong>,</p>
-      <p style="color:#475569;line-height:1.7">Thank you for your interest in interning at <strong>IED India Pvt Ltd</strong>. After careful consideration, we regret to inform you that your application has <strong style="color:#E94560">not been taken forward</strong> at this time.</p>
+      <p style="color:#475569;line-height:1.7">After careful consideration, we regret to inform you that your application has <strong style="color:#E94560">not been taken forward</strong> at this time.</p>
       ${reason ? `<div style="background:#fff5f5;border-left:4px solid #E94560;border-radius:8px;padding:16px;margin:20px 0"><p style="margin:0;color:#991b1b;font-size:14px"><strong>Reason:</strong> ${reason}</p></div>` : ''}
-      <p style="color:#475569;line-height:1.7">We encourage you to apply again in the future. We appreciate your interest and wish you the very best.</p>
+      <p style="color:#475569;line-height:1.7">We encourage you to apply again in the future.</p>
       <p style="color:#94a3b8;font-size:13px;margin-top:24px">Warm regards,<br><strong>IED India HR Team</strong></p>
     `)),
 
@@ -110,7 +115,7 @@ const emailService = {
     _wrap(`
       <h2 style="color:#022654;margin-top:0">Your Interview has been Scheduled!</h2>
       <p style="color:#475569">Dear <strong>${name}</strong>,</p>
-      <p style="color:#475569;line-height:1.7">We are pleased to invite you for an interview at <strong>IED India Pvt Ltd</strong>. Please find the details below:</p>
+      <p style="color:#475569;line-height:1.7">You are invited for an interview at <strong>IED India Pvt Ltd</strong>. Details below:</p>
       <div style="background:#f0f4f8;border-radius:10px;padding:20px;margin:20px 0">
         <table style="width:100%;border-collapse:collapse">
           <tr><td style="padding:8px 0;color:#94a3b8;font-size:13px;width:120px">Date</td><td style="padding:8px 0;color:#0f172a;font-weight:600">${interview.scheduledAt ? new Date(interview.scheduledAt).toDateString() : (interview.scheduledDate ? new Date(interview.scheduledDate).toDateString() : 'To be confirmed')}</td></tr>
@@ -120,7 +125,6 @@ const emailService = {
           ${interview.meetLink ? `<tr><td style="padding:8px 0;color:#94a3b8;font-size:13px">Meet Link</td><td style="padding:8px 0"><a href="${interview.meetLink}" style="color:#03377A;font-weight:600">${interview.meetLink}</a></td></tr>` : ''}
         </table>
       </div>
-      <p style="color:#475569;line-height:1.7">Please be available on time. Reply to this email if you have any questions.</p>
       ${interview.meetLink ? _btn('Join Interview', interview.meetLink, '#03377A') : ''}
       <p style="color:#94a3b8;font-size:13px;margin-top:24px">Warm regards,<br><strong>IED India HR Team</strong></p>
     `)),
@@ -130,9 +134,8 @@ const emailService = {
     _wrap(`
       <h2 style="color:#022654;margin-top:0">Interview Outcome</h2>
       <p style="color:#475569">Dear <strong>${name}</strong>,</p>
-      <p style="color:#475569;line-height:1.7">Thank you for attending the interview at <strong>IED India Pvt Ltd</strong>. After a thorough evaluation, we regret to inform you that we will <strong style="color:#E94560">not be proceeding</strong> further with your candidature at this time.</p>
+      <p style="color:#475569;line-height:1.7">Thank you for attending the interview. After evaluation, we will <strong style="color:#E94560">not be proceeding</strong> further at this time.</p>
       ${reason ? `<div style="background:#fff5f5;border-left:4px solid #E94560;border-radius:8px;padding:16px;margin:20px 0"><p style="margin:0;color:#991b1b;font-size:14px"><strong>Feedback:</strong> ${reason}</p></div>` : ''}
-      <p style="color:#475569;line-height:1.7">We truly appreciate your time and wish you the very best in your future endeavours.</p>
       <p style="color:#94a3b8;font-size:13px;margin-top:24px">Warm regards,<br><strong>IED India HR Team</strong></p>
     `)),
 
@@ -141,8 +144,7 @@ const emailService = {
     _wrap(`
       <h2 style="color:#022654;margin-top:0">Welcome to IED India!</h2>
       <p style="color:#475569">Dear <strong>${name}</strong>,</p>
-      <p style="color:#475569;line-height:1.7">Congratulations! You have been <strong style="color:#10b981">selected</strong> for the internship at <strong>IED India Pvt Ltd</strong>.</p>
-      <p style="color:#475569;line-height:1.7">Your portal login credentials:</p>
+      <p style="color:#475569;line-height:1.7">Congratulations! You have been <strong style="color:#10b981">selected</strong> for the internship at <strong>IED India Pvt Ltd</strong>!</p>
       <div style="background:#f0f4f8;border-radius:10px;padding:20px;margin:20px 0;border-left:4px solid #10b981">
         <table style="width:100%;border-collapse:collapse">
           <tr><td style="padding:8px 0;color:#94a3b8;font-size:13px;width:140px">Portal URL</td><td style="padding:8px 0"><a href="${BASE}" style="color:#03377A;font-weight:600">${BASE}</a></td></tr>
@@ -150,7 +152,7 @@ const emailService = {
           <tr><td style="padding:8px 0;color:#94a3b8;font-size:13px">Password</td><td style="padding:8px 0;color:#0f172a;font-weight:700;font-family:monospace;font-size:16px">${tempPassword}</td></tr>
         </table>
       </div>
-      <p style="color:#E94560;font-size:13px">Please log in and change your password immediately.</p>
+      <p style="color:#E94560;font-size:13px;">Please log in and change your password immediately.</p>
       ${_btn('Login to Portal', BASE, '#10b981')}
       <p style="color:#94a3b8;font-size:13px;margin-top:24px">Warm regards,<br><strong>IED India HR Team</strong></p>
     `)),
@@ -160,7 +162,7 @@ const emailService = {
     _wrap(`
       <h2 style="color:#022654;margin-top:0">Application Status Update</h2>
       <p style="color:#475569">Dear <strong>${name}</strong>,</p>
-      <p style="color:#475569;line-height:1.7">Your application status has been updated to: <strong style="color:#03377A;text-transform:uppercase">${status.replace(/_/g, ' ')}</strong></p>
+      <p style="color:#475569;line-height:1.7">Your application status: <strong style="color:#03377A;text-transform:uppercase">${status.replace(/_/g, ' ')}</strong></p>
       ${_btn('View Portal', BASE)}
       <p style="color:#94a3b8;font-size:13px;margin-top:24px">Warm regards,<br><strong>IED India HR Team</strong></p>
     `)),
