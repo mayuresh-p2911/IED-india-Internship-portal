@@ -96,12 +96,19 @@ window.CommunicationModule = {
       if (el.textContent.includes(u.name)) el.classList.add('active');
     });
 
+    // On mobile: slide the chat area into view
+    const layout = document.querySelector('.chat-layout');
+    if (layout) layout.classList.add('chat-open');
+
     // Render the layout once
     const areaContent = document.getElementById('chat-area-content');
     if (areaContent) {
       const headerAvatar = u.photo ? `<img src="${u.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />` : getInitials(u.name);
       areaContent.innerHTML = `
         <div class="chat-header">
+          <button class="chat-back-btn" onclick="CommunicationModule.goBackToList()" title="Back to conversations">
+            <i data-lucide="arrow-left" style="width:18px;height:18px"></i> Back
+          </button>
           <div class="avatar">${headerAvatar}</div>
           <div><strong>${u.name}</strong><div style="font-size:0.75rem;color:var(--text-muted)">${u.role} · ${u.department||''}</div></div>
         </div>
@@ -234,6 +241,13 @@ window.CommunicationModule = {
     if (fileInput) fileInput.value = '';
     const preview = document.getElementById('attachment-preview');
     if (preview) preview.style.display = 'none';
+  },
+
+  goBackToList: () => {
+    const layout = document.querySelector('.chat-layout');
+    if (layout) layout.classList.remove('chat-open');
+    if (CommunicationModule._pollInterval) clearInterval(CommunicationModule._pollInterval);
+    CommunicationModule._pollInterval = null;
   },
 
   filterUsers: (e) => {
