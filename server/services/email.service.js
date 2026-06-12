@@ -1,7 +1,3 @@
-/**
- * IED India — Email Service
- * Reverted to the original working Nodemailer SMTP configuration.
- */
 const nodemailer = require('nodemailer');
 
 const createTransporter = () => {
@@ -12,14 +8,28 @@ const createTransporter = () => {
     return nodemailer.createTransport({
       host: process.env.EMAIL_HOST || 'smtp.gmail.com',
       port: parseInt(process.env.EMAIL_PORT) || 587,
-      secure: false, // false for 587
+      secure: false,
       auth: { user, pass }
     });
   }
-  return null;
+  return null; // Mock mode
 };
 
 const BASE = 'https://ied-india-internship-portal.vercel.app/';
+
+const sendMail = async (to, subject, html) => {
+  try {
+    const transporter = createTransporter();
+    if (!transporter) {
+      console.log(`📧 [MOCK EMAIL] To: ${to} | Subject: ${subject}`);
+      return;
+    }
+    await transporter.sendMail({ from: process.env.EMAIL_FROM, to, subject, html });
+    console.log(`📧 [EMAIL SENT] To: ${to} | Subject: ${subject}`);
+  } catch (err) {
+    console.error(`❌ [EMAIL ERROR] Failed to send email to ${to}:`, err.message);
+  }
+};
 
 const _wrap = (content) => `
   <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
@@ -35,24 +45,6 @@ const _wrap = (content) => `
 
 const _btn = (text, url, color = '#03377A') =>
   `<div style="text-align:center;margin:24px 0"><a href="${url}" style="background:${color};color:#fff;text-decoration:none;padding:12px 28px;border-radius:30px;font-weight:600;font-size:14px;display:inline-block">${text}</a></div>`;
-
-const sendMail = async (to, subject, html) => {
-  try {
-    const transporter = createTransporter();
-    if (!transporter) {
-      console.log(`📧 [MOCK EMAIL] To: ${to} | Subject: ${subject}`);
-      return;
-    }
-    const fromUser = process.env.EMAIL_USER;
-    const fromName = process.env.EMAIL_FROM_NAME || 'IED India';
-    const fromAddress = process.env.EMAIL_FROM || `"${fromName}" <${fromUser}>`;
-    
-    await transporter.sendMail({ from: fromAddress, to, subject, html });
-    console.log(`📧 [EMAIL SENT] To: ${to} | Subject: ${subject}`);
-  } catch (err) {
-    console.error(`❌ [EMAIL ERROR] ${to}:`, err.message);
-  }
-};
 
 const emailService = {
   // ── Application received ───────────────────────────────
