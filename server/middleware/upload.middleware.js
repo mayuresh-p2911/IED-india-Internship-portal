@@ -4,47 +4,52 @@ const Upload = require('../models/Upload');
 const persistUploads = async (req, res, next) => {
   try {
     const processFile = async (file) => {
-      if (!file || !file.path) return;
-      
-      if (fs.existsSync(file.path)) {
-        const data = fs.readFileSync(file.path);
-        
-        await Upload.findOneAndUpdate(
-          { filename: file.filename },
-          {
-            filename: file.filename,
-            contentType: file.mimetype,
-            data: data
-          },
-          { upsert: true, new: true }
-        );
-        
-        try {
-          fs.unlinkSync(file.path);
-        } catch (unlinkErr) {
-          console.warn(`[WARN] Failed to delete temporary file ${file.path}: ${unlinkErr.message}`);
-        }
+      if (!file) return;
+
+      let data;
+
+      // Case 1: File is in memory (memoryStorage / Vercel)
+      if (file.buffer) {
+        data = file.buffer;
       }
+      // Case 2: File is on disk (diskStorage / local)
+      else if (file.path && fs.existsSync(file.path)) {
+        data = fs.readFileSync(file.path);
+        try { fs.unlinkSync(file.path); } catch (_) {}
+      }
+
+      if (!data) {
+        console.warn(`[WARN] No file data found for ${file.filename || file.originalname}`);
+        return;
+      }
+
+      await Upload.findOneAndUpdate(
+        { filename: file.filename },
+        { filename: file.filename, contentType: file.mimetype, data },
+        { upsert: true, new: true }
+      );
+
+      console.log(`[OK] File '${file.filename}' saved to MongoDB (${data.length} bytes)`);
+
+      // Always normalise path so controller uses the /uploads/ URL
+      file.path = `/uploads/${file.filename}`;
     };
 
     if (req.file) {
       await processFile(req.file);
-      req.file.path = `/uploads/${req.file.filename}`;
     }
 
     if (req.files) {
       for (const fieldName of Object.keys(req.files)) {
-        const filesArray = req.files[fieldName];
-        for (const file of filesArray) {
+        for (const file of req.files[fieldName]) {
           await processFile(file);
-          file.path = `/uploads/${file.filename}`;
         }
       }
     }
 
     next();
   } catch (error) {
-    console.error(`[ERROR] Persisting upload to MongoDB failed: ${error.message}`);
+    console.error(`[ERROR] persistUploads failed: ${error.message}`);
     next(error);
   }
 };
