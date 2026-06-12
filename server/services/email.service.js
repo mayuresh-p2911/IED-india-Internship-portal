@@ -6,9 +6,7 @@
 const nodemailer = require('nodemailer');
 const https = require('https');
 
-const BASE = process.env.NODE_ENV === 'development'
-  ? (process.env.CLIENT_URL || 'http://localhost:5000')
-  : 'https://ied-india-internship-portal.vercel.app';
+const BASE = 'https://ied-india-internship-portal.vercel.app';
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
 // ── Resend API Helper ─────────────────────────────────────────
@@ -190,8 +188,8 @@ const emailService = {
       <p style="color:#475569;line-height:1.7">You are invited for an interview at <strong>IED India Pvt Ltd</strong>. Details below:</p>
       <div style="background:#f0f4f8;border-radius:10px;padding:20px;margin:20px 0">
         <table style="width:100%;border-collapse:collapse">
-          <tr><td style="padding:8px 0;color:#94a3b8;font-size:13px;width:120px">Date</td><td style="padding:8px 0;color:#0f172a;font-weight:600">${interview.scheduledAt ? new Date(interview.scheduledAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : (interview.scheduledDate ? new Date(interview.scheduledDate).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : 'To be confirmed')}</td></tr>
-          <tr><td style="padding:8px 0;color:#94a3b8;font-size:13px">Time</td><td style="padding:8px 0;color:#0f172a;font-weight:600">${interview.scheduledAt ? new Date(interview.scheduledAt).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true }) : (interview.time || 'To be confirmed')}</td></tr>
+          <tr><td style="padding:8px 0;color:#94a3b8;font-size:13px;width:120px">Date</td><td style="padding:8px 0;color:#0f172a;font-weight:600">${interview.scheduledDate ? new Date(interview.scheduledDate).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : (interview.scheduledAt ? new Date(interview.scheduledAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : 'To be confirmed')}</td></tr>
+          <tr><td style="padding:8px 0;color:#94a3b8;font-size:13px">Time</td><td style="padding:8px 0;color:#0f172a;font-weight:600">${interview.time ? interview.time : (interview.scheduledAt ? new Date(interview.scheduledAt).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true }) : 'To be confirmed')}</td></tr>
           <tr><td style="padding:8px 0;color:#94a3b8;font-size:13px">Mode</td><td style="padding:8px 0;color:#0f172a;font-weight:600;text-transform:capitalize">${(interview.mode || '').replace('_', ' ')}</td></tr>
           ${interview.interviewer ? `<tr><td style="padding:8px 0;color:#94a3b8;font-size:13px">Interviewer</td><td style="padding:8px 0;color:#0f172a;font-weight:600">${interview.interviewer}</td></tr>` : ''}
           ${interview.meetLink ? `<tr><td style="padding:8px 0;color:#94a3b8;font-size:13px">Meet Link</td><td style="padding:8px 0"><a href="${interview.meetLink}" style="color:#03377A;font-weight:600">${interview.meetLink}</a></td></tr>` : ''}

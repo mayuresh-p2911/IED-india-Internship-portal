@@ -73,7 +73,7 @@ const submitApplication = async (req, res) => {
     const data = { ...req.body };
     if (req.files) {
       if (req.files.resume) data.resume = `/uploads/applications/${req.files.resume[0].filename}`;
-      if (req.files.photo)  data.photo  = `/uploads/applications/${req.files.photo[0].filename}`;
+      if (req.files.photo) data.photo = `/uploads/applications/${req.files.photo[0].filename}`;
     }
     const application = await Application.create(data);
     await emailService.sendApplicationReceived(application.email, application.name);
