@@ -1,65 +1,107 @@
 /**
  * IED India — Email Service
- * Uses Resend API (HTTPS) instead of SMTP.
- * Vercel blocks all SMTP ports, so SMTP never works on Vercel.
- * Resend API works over HTTPS and is free (3,000 emails/month).
+ * Supports both Resend API (HTTPS, recommended for Vercel)
+ * and Nodemailer SMTP (recommended for local testing or custom mail servers).
  */
+const nodemailer = require('nodemailer');
 const https = require('https');
 
 const BASE = process.env.CLIENT_URL || 'https://ied-india-internship-portal.vercel.app';
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
-// The "from" address. With free Resend (no custom domain), you must use:
-//   onboarding@resend.dev  (works for sending to any address)
-// Once you verify your own domain in Resend dashboard, change this to your domain email.
-const FROM_ADDRESS = process.env.EMAIL_FROM || 'IED India <onboarding@resend.dev>';
-
-// ── Core send via Resend API ────────────────────────────────
-const sendMail = (to, subject, html) => {
-  return new Promise((resolve) => {
-    if (!RESEND_API_KEY) {
-      console.log(`📧 [MOCK EMAIL] To: ${to} | Subject: ${subject}`);
-      console.log('   → Add RESEND_API_KEY to Vercel env vars to send real emails.');
-      return resolve({ mocked: true });
-    }
-
-    const body = JSON.stringify({ from: FROM_ADDRESS, to: [to], subject, html });
-
-    const options = {
-      hostname: 'api.resend.com',
-      port: 443,
-      path: '/emails',
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(body),
-      },
-    };
-
-    const req = https.request(options, (res) => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => {
-        if (res.statusCode === 200 || res.statusCode === 201) {
-          console.log(`📧 [EMAIL SENT] To: ${to} | Subject: ${subject}`);
-          resolve(JSON.parse(data));
-        } else {
-          console.error(`❌ [EMAIL ERROR] Status ${res.statusCode} | To: ${to}`);
-          console.error('   Response:', data);
-          resolve(null);
-        }
+// ── Core send function ──────────────────────────────────────
+const sendMail = async (to, subject, html) => {
+  // Option 1: Use Resend API if API Key is set
+  if (RESEND_API_KEY && RESEND_API_KEY !== 'your-resend-api-key') {
+    return new Promise((resolve) => {
+      const fromAddress = process.env.EMAIL_FROM || 'IED India <onboarding@resend.dev>';
+      const body = JSON.stringify({
+        from: fromAddress,
+        to: [to],
+        subject,
+        html
       });
-    });
 
-    req.on('error', (err) => {
-      console.error(`❌ [EMAIL ERROR] To: ${to} | ${err.message}`);
-      resolve(null);
-    });
+      const options = {
+        hostname: 'api.resend.com',
+        port: 443,
+        path: '/emails',
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${RESEND_API_KEY}`,
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(body),
+        },
+      };
 
-    req.write(body);
-    req.end();
-  });
+      const req = https.request(options, (res) => {
+        let data = '';
+        res.on('data', chunk => data += chunk);
+        res.on('end', () => {
+          if (res.statusCode === 200 || res.statusCode === 201) {
+            console.log(`📧 [EMAIL SENT via Resend] To: ${to} | Subject: ${subject}`);
+            try {
+              resolve(JSON.parse(data));
+            } catch (e) {
+              resolve({ success: true });
+            }
+          } else {
+            console.error(`❌ [EMAIL ERROR via Resend] Status ${res.statusCode} | To: ${to}`);
+            console.error('   Response:', data);
+            resolve(null);
+          }
+        });
+      });
+
+      req.on('error', (err) => {
+        console.error(`❌ [EMAIL ERROR via Resend] To: ${to} | ${err.message}`);
+        resolve(null);
+      });
+
+      req.write(body);
+      req.end();
+    });
+  }
+
+  // Option 2: Fall back to SMTP if Gmail/SMTP credentials are set
+  const user = process.env.EMAIL_USER;
+  const pass = process.env.EMAIL_PASS;
+
+  if (user && pass && user !== 'your-gmail@gmail.com' && pass !== 'your-16-char-app-password') {
+    try {
+      const host = process.env.EMAIL_HOST || 'smtp.gmail.com';
+      const port = parseInt(process.env.EMAIL_PORT) || 465;
+      const secure = port === 465;
+
+      const transporter = nodemailer.createTransport({
+        host,
+        port,
+        secure,
+        auth: { user, pass },
+        tls: { rejectUnauthorized: false },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 15000,
+      });
+
+      const fromName = process.env.EMAIL_FROM_NAME || 'IED India';
+      const from = `"${fromName}" <${user}>`;
+
+      const info = await transporter.sendMail({ from, to, subject, html });
+      console.log(`📧 [EMAIL SENT via SMTP] To: ${to} | Subject: ${subject} | MsgId: ${info.messageId}`);
+      return info;
+    } catch (err) {
+      console.error(`❌ [EMAIL ERROR via SMTP] To: ${to} | Subject: ${subject}`);
+      console.error('   code:', err.code, '| msg:', err.message);
+      if (err.response) console.error('   SMTP Response:', err.response);
+      return null;
+    }
+  }
+
+  // Fallback: Mock mode
+  console.log(`📧 [MOCK EMAIL] To: ${to} | Subject: ${subject}`);
+  console.log('   → Set RESEND_API_KEY (HTTP) or EMAIL_USER/EMAIL_PASS (SMTP) in env variables to send real emails.');
+  return { mocked: true };
 };
 
 // ── HTML helpers ────────────────────────────────────────────
