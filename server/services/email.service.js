@@ -50,14 +50,14 @@ const sendMail = async (to, subject, html) => {
           } else {
             console.error(`❌ [EMAIL ERROR via Resend] Status ${res.statusCode} | To: ${to}`);
             console.error('   Response:', data);
-            resolve(null);
+            resolve({ success: false, error: `Resend API returned status ${res.statusCode}`, response: data });
           }
         });
       });
 
       req.on('error', (err) => {
         console.error(`❌ [EMAIL ERROR via Resend] To: ${to} | ${err.message}`);
-        resolve(null);
+        resolve({ success: false, error: err.message });
       });
 
       req.write(body);
@@ -91,19 +91,19 @@ const sendMail = async (to, subject, html) => {
 
       const info = await transporter.sendMail({ from, to, subject, html });
       console.log(`📧 [EMAIL SENT via SMTP] To: ${to} | Subject: ${subject} | MsgId: ${info.messageId}`);
-      return info;
+      return { success: true, messageId: info.messageId };
     } catch (err) {
       console.error(`❌ [EMAIL ERROR via SMTP] To: ${to} | Subject: ${subject}`);
       console.error('   code:', err.code, '| msg:', err.message);
       if (err.response) console.error('   SMTP Response:', err.response);
-      return null;
+      return { success: false, error: err.message, code: err.code, response: err.response };
     }
   }
 
   // Fallback: Mock mode
   console.log(`📧 [MOCK EMAIL] To: ${to} | Subject: ${subject}`);
   console.log('   → Set RESEND_API_KEY (HTTP) or EMAIL_USER/EMAIL_PASS (SMTP) in env variables to send real emails.');
-  return { mocked: true };
+  return { success: true, mocked: true };
 };
 
 // ── HTML helpers ────────────────────────────────────────────
