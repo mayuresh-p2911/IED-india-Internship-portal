@@ -54,12 +54,29 @@ window.CertificatesModule = {
       </button>
     </div>`,
 
-  download: (id, name, type) => {
+  download: async (id, name, type) => {
     showToast('Preparing certificate PDF...', 'info');
-    const link = document.createElement('a');
-    link.href = `/api/certificates/${id}/download`;
-    link.setAttribute('download', `${name}_${type}_certificate.pdf`);
-    link.click();
+    try {
+      const response = await fetch(`/api/certificates/${id}/download`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('ied_token') || ''}` }
+      });
+      if (!response.ok) {
+         let msg = 'Failed to download certificate. It may need to be regenerated.';
+         try { const data = await response.json(); msg = data.message || msg; } catch(e){}
+         throw new Error(msg);
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${name.replace(/[^a-zA-Z0-9_-]/g, '_')}_${type}_certificate.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
   },
 
   showGenerateModal: async () => {
