@@ -43,7 +43,7 @@ app.get('/uploads/*', async (req, res) => {
     if (require('fs').existsSync(filePath)) {
       return res.sendFile(filePath);
     }
-    const tmpDirs = ['profile', 'messages', 'applications', 'onboarding', 'tasks'];
+    const tmpDirs = ['profile', 'messages', 'applications', 'onboarding', 'tasks', 'certificates'];
     for (const dir of tmpDirs) {
       filePath = path.join(require('os').tmpdir(), dir, filename);
       if (require('fs').existsSync(filePath)) {

@@ -1,12 +1,8 @@
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
-
-const CERT_DIR = path.join(__dirname, '../uploads/certificates');
-
-const ensureDir = () => {
-  if (!fs.existsSync(CERT_DIR)) fs.mkdirSync(CERT_DIR, { recursive: true });
-};
+const os = require('os');
+const Upload = require('../models/Upload');
 
 const typeLabels = {
   completion: 'Certificate of Completion',
@@ -15,14 +11,40 @@ const typeLabels = {
 };
 
 const generatePDF = async ({ intern, type, certNo, performance, validFrom, validTo, qrCode }) => {
-  ensureDir();
   const fileName = `${certNo}.pdf`;
-  const filePath = path.join(CERT_DIR, fileName);
 
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: 'A4', layout: 'landscape', margin: 0 });
-    const stream = fs.createWriteStream(filePath);
-    doc.pipe(stream);
+    
+    // Capture PDF output in memory
+    const buffers = [];
+    doc.on('data', buffers.push.bind(buffers));
+    doc.on('end', async () => {
+      try {
+        const pdfData = Buffer.concat(buffers);
+        
+        // 1. Save to MongoDB to support persistent access across Vercel serverless containers
+        await Upload.findOneAndUpdate(
+          { filename: fileName },
+          { contentType: 'application/pdf', data: pdfData },
+          { upsert: true }
+        );
+
+        // 2. Also try saving to local filesystem if not strictly serverless (for local development)
+        const isServerless = process.env.VERCEL || process.env.NODE_ENV === 'production' || __dirname.includes('/var/task');
+        if (!isServerless) {
+          const CERT_DIR = path.join(__dirname, '../uploads/certificates');
+          if (!fs.existsSync(CERT_DIR)) fs.mkdirSync(CERT_DIR, { recursive: true });
+          fs.writeFileSync(path.join(CERT_DIR, fileName), pdfData);
+        }
+
+        resolve(`uploads/certificates/${fileName}`);
+      } catch (err) {
+        reject(err);
+      }
+    });
+    
+    doc.on('error', reject);
 
     const W = doc.page.width, H = doc.page.height;
 
@@ -97,8 +119,6 @@ const generatePDF = async ({ intern, type, certNo, performance, validFrom, valid
     doc.fontSize(7).fillColor('#607d8b').text('IED India Pvt Ltd', 0, H - 50, { align: 'center', width: W });
 
     doc.end();
-    stream.on('finish', () => resolve(`uploads/certificates/${fileName}`));
-    stream.on('error', reject);
   });
 };
 
