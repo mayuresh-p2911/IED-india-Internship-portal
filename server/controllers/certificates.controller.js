@@ -36,13 +36,25 @@ const downloadCertificate = async (req, res) => {
   try {
     const cert = await Certificate.findById(req.params.id).populate('internId', 'name department');
     if (!cert) return res.status(404).json({ success: false, message: 'Certificate not found' });
+    
     const path = require('path');
+    const filename = path.basename(cert.pdfPath);
+    
+    const Upload = require('../models/Upload');
+    const dbFile = await Upload.findOne({ filename });
+    
+    if (dbFile) {
+      res.set('Content-Type', dbFile.contentType);
+      res.set('Content-Disposition', `attachment; filename="${cert.internId.name.replace(/[^a-zA-Z0-9_-]/g, '_')}_${cert.type}_certificate.pdf"`);
+      return res.send(dbFile.data);
+    }
+    
     const fs = require('fs');
     const filePath = path.join(__dirname, '..', cert.pdfPath);
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ success: false, message: 'Certificate file not found. Please regenerate.' });
     }
-    res.download(filePath, `${cert.internId.name}_${cert.type}_certificate.pdf`);
+    res.download(filePath, `${cert.internId.name.replace(/[^a-zA-Z0-9_-]/g, '_')}_${cert.type}_certificate.pdf`);
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };
 
