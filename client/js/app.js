@@ -456,7 +456,7 @@ const App = (() => {
     document.getElementById('sidebar-overlay')?.addEventListener('click', closeSidebar);
 
     // Logout (sidebar)
-    document.getElementById('logout-btn').addEventListener('click', () => Auth.logout());
+    document.getElementById('logout-btn')?.addEventListener('click', () => Auth.logout());
 
     // Sidebar Profile actions
     document.getElementById('sidebar-edit-profile')?.addEventListener('click', () => showEditProfileModal());
