@@ -68,7 +68,7 @@ app.get('/uploads/*', async (req, res) => {
   res.status(404).send('File not found');
 });
 
-app.use(express.static(path.join(__dirname, '../client')));
+app.use(express.static(path.join(__dirname, '../client/dist')));
 
 // API Routes
 app.use('/api/auth',          require('./routes/auth.routes'));
@@ -87,7 +87,7 @@ app.use('/api/analytics',     require('./routes/analytics.routes'));
 
 // Serve client SPA for all non-API routes
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/index.html'));
+  res.sendFile(path.join(__dirname, '../client/dist/index.html'));
 });
 
 // Global error handler

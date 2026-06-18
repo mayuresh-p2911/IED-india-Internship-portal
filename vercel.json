@@ -9,20 +9,16 @@
       "destination": "/api/index.js"
     },
     {
-      "source": "/css/:path*",
-      "destination": "/client/css/:path*"
-    },
-    {
-      "source": "/js/:path*",
-      "destination": "/client/js/:path*"
+      "source": "/assets/:path*",
+      "destination": "/client/dist/assets/:path*"
     },
     {
       "source": "/img/:path*",
-      "destination": "/client/img/:path*"
+      "destination": "/client/dist/img/:path*"
     },
     {
-      "source": "/((?!api|uploads|css|js|img).*)" ,
-      "destination": "/client/index.html"
+      "source": "/((?!api|uploads|assets|img).*)" ,
+      "destination": "/client/dist/index.html"
     }
   ]
 }

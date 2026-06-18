@@ -33,3 +33,6 @@ Thumbs.db
 
 # Gemini/Antigravity local files
 .gemini/
+
+# Backup directory
+client-vanilla/
