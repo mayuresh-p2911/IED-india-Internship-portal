@@ -70,7 +70,7 @@ const resetCaptcha = () => {
   if (checkbox) {
     checkbox.innerHTML = '';
     checkbox.style.background = '#ffffff';
-    checkbox.style.borderColor = 'rgba(255,255,255,0.2)';
+    checkbox.style.borderColor = '#c2bcae';
   }
 };
 
@@ -173,6 +173,26 @@ document.getElementById('toggle-pass').addEventListener('click', () => {
   lucide.createIcons();
 });
 
+// ── Landing ↔ Login Navigation ────────────────────────────
+const showLoginFromLanding = () => {
+  document.getElementById('landing-page')?.classList.add('hidden');
+  document.getElementById('login-page')?.classList.remove('hidden');
+  lucide.createIcons();
+};
+const showLandingFromLogin = () => {
+  resetCaptcha();
+  document.getElementById('login-page')?.classList.add('hidden');
+  document.getElementById('signup-page')?.classList.add('hidden');
+  document.getElementById('landing-page')?.classList.remove('hidden');
+  lucide.createIcons();
+};
+['landing-signin','landing-get-started','landing-hero-cta','landing-hero-demo','landing-cta-band']
+  .forEach(id => document.getElementById(id)?.addEventListener('click', showLoginFromLanding));
+document.getElementById('login-back-home')?.addEventListener('click', showLandingFromLogin);
+document.getElementById('login-home-logo')?.addEventListener('click', showLandingFromLogin);
+document.getElementById('signup-back-home')?.addEventListener('click', showLandingFromLogin);
+document.getElementById('signup-home-logo')?.addEventListener('click', showLandingFromLogin);
+
 // ── Page Navigation (Login / Signup / Apply) ──────────────
 document.getElementById('show-signup')?.addEventListener('click', (e) => {
   e.preventDefault();
@@ -182,7 +202,7 @@ document.getElementById('show-signup')?.addEventListener('click', (e) => {
   lucide.createIcons();
 });
 
-document.getElementById('back-to-login-from-signup').addEventListener('click', (e) => {
+document.getElementById('back-to-login-from-signup')?.addEventListener('click', (e) => {
   e.preventDefault();
   resetCaptcha();
   document.getElementById('signup-page').classList.add('hidden');
@@ -190,21 +210,21 @@ document.getElementById('back-to-login-from-signup').addEventListener('click', (
   lucide.createIcons();
 });
 
-document.getElementById('show-apply').addEventListener('click', (e) => {
+document.getElementById('show-apply')?.addEventListener('click', (e) => {
   e.preventDefault();
   resetCaptcha();
   document.getElementById('login-page').classList.add('hidden');
   document.getElementById('apply-page').classList.remove('hidden');
 });
 
-document.getElementById('back-to-login').addEventListener('click', () => {
+document.getElementById('back-to-login')?.addEventListener('click', () => {
   resetCaptcha();
   document.getElementById('apply-page').classList.add('hidden');
   document.getElementById('login-page').classList.remove('hidden');
 });
 
 // Public application form submission
-document.getElementById('apply-form').addEventListener('submit', async (e) => {
+document.getElementById('apply-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const msgEl = document.getElementById('apply-msg');
   const btn = e.target.querySelector('[type="submit"]');

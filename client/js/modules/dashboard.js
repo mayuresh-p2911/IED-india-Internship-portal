@@ -20,115 +20,184 @@ window.DashboardModule = {
 
   _renderAdminHR: async (content) => {
     try {
-      const [statsData, announcementsData] = await Promise.all([
+      const [statsData, appsData, interviewsData] = await Promise.all([
         API.get('/analytics/summary'),
-        API.get('/announcements')
+        API.get('/applications?limit=12').catch(() => ({ applications: [] })),
+        API.get('/interviews').catch(() => ({ interviews: [] }))
       ]);
       const s = statsData.stats || {};
       const charts = statsData.charts || {};
-      const announcements = announcementsData.announcements || [];
+      const apps = appsData.applications || [];
+      const interviews = interviewsData.interviews || [];
+
+      const firstName = (Auth.user.name || 'there').split(' ')[0];
+      const now = Date.now();
+      const upcoming = interviews
+        .filter(i => { const t = new Date(i.scheduledAt || i.scheduledDate).getTime(); return t && t >= now && i.status !== 'cancelled'; })
+        .slice(0, 3);
+      const pending = apps.filter(a => ['applied', 'shortlisted'].includes(a.status)).slice(0, 3);
+      const recent = apps.slice(0, 4);
+      const AV = ['#ff4f00', '#2f7d4f', '#3b82f6', '#8b5cf6', '#ec4899', '#d97706'];
 
       content.innerHTML = `
-        <div class="welcome-banner">
-          <div class="welcome-text">
-            <h2>Good ${DashboardModule._greeting()}, <span>${Auth.user.name.split(' ')[0]}</span>!</h2>
-            <p>${new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+        <!-- HERO -->
+        <div class="dash-hero">
+          <div>
+            <h2>Good ${DashboardModule._greeting()}, ${firstName}! 👋</h2>
+            <p class="sub">Here's what's happening with your internship program today.</p>
+            <div class="dash-hero-mini">
+              <div class="hero-mini"><span class="hm-ico ico-green"><i data-lucide="user-check"></i></span><div><b>${s.activeInterns || 0}</b><span>Active Interns</span></div></div>
+              <div class="hero-mini"><span class="hm-ico ico-blue"><i data-lucide="file-text"></i></span><div><b>${s.totalApplications || 0}</b><span>Applications</span></div></div>
+              <div class="hero-mini"><span class="hm-ico ico-amber"><i data-lucide="clock"></i></span><div><b>${s.pendingApplications || 0}</b><span>Pending Review</span></div></div>
+            </div>
           </div>
-          <div class="welcome-emoji"><i data-lucide="bar-chart-2" style="width:48px;height:48px;color:#f59e0b"></i></div>
+          <div class="dash-hero-art"><canvas id="heroSpark"></canvas></div>
         </div>
 
-        <div class="stats-grid">
-          <div class="stat-card"><div class="stat-icon blue"><i data-lucide="users"></i></div><div class="stat-info"><div class="stat-value">${s.totalInterns || 0}</div><div class="stat-label">Total Interns</div></div></div>
-          <div class="stat-card"><div class="stat-icon green"><i data-lucide="user-check"></i></div><div class="stat-info"><div class="stat-value">${s.activeInterns || 0}</div><div class="stat-label">Active Interns</div></div></div>
-          <div class="stat-card"><div class="stat-icon gold"><i data-lucide="file-text"></i></div><div class="stat-info"><div class="stat-value">${s.totalApplications || 0}</div><div class="stat-label">Applications</div></div></div>
-          <div class="stat-card"><div class="stat-icon orange"><i data-lucide="clock"></i></div><div class="stat-info"><div class="stat-value">${s.pendingApplications || 0}</div><div class="stat-label">Pending Review</div></div></div>
-          <div class="stat-card"><div class="stat-icon cyan"><i data-lucide="check-square"></i></div><div class="stat-info"><div class="stat-value">${s.todayAttendance || 0}</div><div class="stat-label">Present Today</div></div></div>
-          <div class="stat-card"><div class="stat-icon purple"><i data-lucide="award"></i></div><div class="stat-info"><div class="stat-value">${s.totalCertificates || 0}</div><div class="stat-label">Certificates Issued</div></div></div>
-          <div class="stat-card"><div class="stat-icon red"><i data-lucide="calendar-off"></i></div><div class="stat-info"><div class="stat-value">${s.pendingLeaves || 0}</div><div class="stat-label">Pending Leaves</div></div></div>
-          <div class="stat-card"><div class="stat-icon blue"><i data-lucide="star"></i></div><div class="stat-info"><div class="stat-value">${s.avgEvaluationScore || '-'}</div><div class="stat-label">Avg. Score</div></div></div>
+        <!-- KPI ROW 1 -->
+        <div class="kpi-grid">
+          ${DashboardModule._kpi('users', 'ico-blue', s.totalInterns || 0, 'Total Interns')}
+          ${DashboardModule._kpi('user-check', 'ico-green', s.activeInterns || 0, 'Active Interns')}
+          ${DashboardModule._kpi('file-text', 'ico-orange', s.totalApplications || 0, 'Applications')}
+          ${DashboardModule._kpi('clock', 'ico-amber', s.pendingApplications || 0, 'Pending Review')}
+        </div>
+        <!-- KPI ROW 2 -->
+        <div class="kpi-grid cols-3">
+          ${DashboardModule._kpi('check-square', 'ico-blue', s.todayAttendance || 0, 'Present Today')}
+          ${DashboardModule._kpi('award', 'ico-purple', s.totalCertificates || 0, 'Certificates Issued')}
+          ${DashboardModule._kpi('star', 'ico-pink', (s.avgEvaluationScore ? s.avgEvaluationScore : '-'), 'Average Score')}
         </div>
 
-        <div class="quick-actions">
-          <button class="quick-action-btn" onclick="App.navigate('applications')"><i data-lucide="file-plus"></i> Review Applications</button>
-          <button class="quick-action-btn" onclick="App.navigate('interviews')"><i data-lucide="calendar-plus"></i> Schedule Interview</button>
-          <button class="quick-action-btn" onclick="App.navigate('attendance')"><i data-lucide="clock"></i> Attendance Report</button>
-          <button class="quick-action-btn" onclick="App.navigate('certificates')"><i data-lucide="award"></i> Generate Certificate</button>
-          <button class="quick-action-btn" onclick="App.navigate('analytics')"><i data-lucide="bar-chart-2"></i> Full Analytics</button>
+        <!-- QUICK ACTIONS -->
+        <div class="qa-grid">
+          ${DashboardModule._qa('applications', 'file-text', 'ico-orange', 'Review Applications', 'View and shortlisting')}
+          ${DashboardModule._qa('interviews', 'calendar', 'ico-blue', 'Schedule Interview', 'Plan new interview')}
+          ${DashboardModule._qa('attendance', 'clipboard-list', 'ico-green', 'Attendance Report', 'View attendance')}
+          ${DashboardModule._qa('certificates', 'award', 'ico-purple', 'Generate Certificate', 'Create new certificate')}
+          ${DashboardModule._qa('analytics', 'bar-chart-2', 'ico-amber', 'Full Analytics', 'Detailed insights')}
         </div>
 
-        <div class="chart-grid">
-          <div class="chart-card glass-card">
-            <h4>Application Status</h4>
-            <div class="chart-wrap"><canvas id="appStatusChart"></canvas></div>
+        <!-- CHARTS -->
+        <div class="dash-charts">
+          <div class="panel">
+            <div class="panel-head"><h4>Application Status</h4></div>
+            <div style="display:grid;grid-template-columns:160px 1fr;gap:18px;align-items:center;">
+              <div style="position:relative;height:170px;"><canvas id="appStatusChart"></canvas></div>
+              <div id="appStatusLegend"></div>
+            </div>
           </div>
-          <div class="chart-card glass-card">
-            <h4>Monthly Applications</h4>
-            <div class="chart-wrap"><canvas id="monthlyAppChart"></canvas></div>
+          <div class="panel">
+            <div class="panel-head"><h4>Monthly Applications</h4></div>
+            <div style="position:relative;height:200px;"><canvas id="monthlyAppChart"></canvas></div>
           </div>
         </div>
 
-        <div class="dashboard-grid-3">
-          <div class="activity-feed glass-card">
-            <h4><i data-lucide="activity"></i> Announcements</h4>
-            ${announcements.slice(0, 5).map(a => `
-              <div class="activity-item">
-                <div class="activity-dot blue"></div>
-                <div>
-                  <div class="activity-text"><strong>${a.title}</strong></div>
-                  <div class="activity-time">${timeAgo(a.createdAt)} · by ${a.postedBy?.name || 'System'}</div>
+        <!-- BOTTOM PANELS -->
+        <div class="dash-cols">
+          <div class="panel">
+            <div class="panel-head"><h4>Recent Activity</h4><a onclick="App.navigate('applications')">View All</a></div>
+            ${recent.length ? recent.map((a, idx) => `
+              <div class="info-row">
+                <div class="info-av" style="background:${AV[idx % AV.length]}">${getInitials(a.name)}</div>
+                <div class="info-main">
+                  <div class="info-t"><strong>${a.name}</strong> applied for ${a.department || 'Internship'}</div>
+                  <div class="info-s">${timeAgo(a.createdAt)}</div>
                 </div>
-              </div>`).join('') || '<p class="text-muted" style="padding:12px 0">No announcements yet</p>'}
+              </div>`).join('') : '<p class="text-muted" style="padding:10px 0">No recent activity</p>'}
           </div>
-          <div class="chart-card glass-card">
-            <h4>Department Distribution</h4>
-            <div class="chart-wrap"><canvas id="deptChart"></canvas></div>
+
+          <div class="panel">
+            <div class="panel-head"><h4>Upcoming Interviews</h4><a onclick="App.navigate('interviews')">View All</a></div>
+            ${upcoming.length ? upcoming.map((i, idx) => {
+              const nm = i.candidateName || i.applicationId?.name || 'Candidate';
+              const dept = i.applicationId?.department || i.mode || '';
+              const d = new Date(i.scheduledAt || i.scheduledDate);
+              return `
+              <div class="info-row">
+                <div class="info-av" style="background:${AV[idx % AV.length]}">${getInitials(nm)}</div>
+                <div class="info-main">
+                  <div class="info-t">${nm}</div>
+                  <div class="info-s">${dept}</div>
+                </div>
+                <div class="info-meta">${d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}<br>${i.time || d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</div>
+              </div>`; }).join('') : '<p class="text-muted" style="padding:10px 0">No upcoming interviews</p>'}
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h4>Pending Reviews</h4><a onclick="App.navigate('applications')">View All</a></div>
+            ${pending.length ? pending.map(a => `
+              <div class="info-row">
+                <div class="info-av" style="background:#f3ece2;color:#ff4f00"><i data-lucide="file-text" style="width:16px;height:16px"></i></div>
+                <div class="info-main">
+                  <div class="info-t"><strong>${a.name}</strong></div>
+                  <div class="info-s">${a.department || ''} Intern</div>
+                </div>
+                <div class="info-meta">Applied on<br>${new Date(a.createdAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</div>
+              </div>`).join('') : '<p class="text-muted" style="padding:10px 0">Nothing pending</p>'}
           </div>
         </div>`;
 
       lucide.createIcons();
 
-      // Render charts
-      Chart.defaults.color = '#475569';
-      Chart.defaults.borderColor = '#e2e8f0';
-      const COLORS = ['#3b82f6','#06b6d4','#f59e0b','#10b981','#ef4444','#8b5cf6','#f97316'];
+      // ── Charts ──────────────────────────────────────────
+      Chart.defaults.color = '#939084';
+      Chart.defaults.borderColor = '#f0eadf';
+      Chart.defaults.font.family = "'Inter', sans-serif";
+      const COLORS = ['#3b82f6','#2f7d4f','#f59e0b','#8b5cf6','#d64545','#06b6d4','#ff4f00'];
 
-      if (dashCharts.appStatus) dashCharts.appStatus.destroy();
-      if (dashCharts.monthly) dashCharts.monthly.destroy();
-      if (dashCharts.dept) dashCharts.dept.destroy();
+      ['appStatus','monthly','spark'].forEach(k => dashCharts[k]?.destroy?.());
 
+      // donut + custom legend
       const appStats = charts.appStats || [];
+      const total = appStats.reduce((sum, x) => sum + x.count, 0) || 1;
       dashCharts.appStatus = new Chart(document.getElementById('appStatusChart'), {
         type: 'doughnut',
-        data: {
-          labels: appStats.map(s => s._id?.replace(/_/g,' ')),
-          datasets: [{ data: appStats.map(s => s.count), backgroundColor: COLORS, borderWidth: 0 }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        data: { labels: appStats.map(x => (x._id||'').replace(/_/g,' ')), datasets: [{ data: appStats.map(x => x.count), backgroundColor: COLORS, borderWidth: 0, cutout: '68%' }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
       });
+      const legend = document.getElementById('appStatusLegend');
+      if (legend) legend.innerHTML = appStats.map((x, i) => {
+        const pct = ((x.count/total)*100).toFixed(1);
+        const lbl = (x._id||'').replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+        return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13.5px;">
+          <span style="width:9px;height:9px;border-radius:3px;background:${COLORS[i%COLORS.length]}"></span>
+          <span style="flex:1;color:#36342e;font-weight:500">${lbl}</span>
+          <span style="color:#939084;font-weight:600">${x.count} (${pct}%)</span></div>`;
+      }).join('') || '<p class="text-muted">No applications yet</p>';
 
+      // monthly bars
       const monthlyApps = charts.monthlyApps || [];
       const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
       dashCharts.monthly = new Chart(document.getElementById('monthlyAppChart'), {
         type: 'bar',
-        data: {
-          labels: monthlyApps.map(m => `${months[m._id.month-1]} ${m._id.year}`),
-          datasets: [{ label: 'Applications', data: monthlyApps.map(m => m.count), backgroundColor: 'rgba(79,142,247,0.7)', borderRadius: 6 }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        data: { labels: monthlyApps.map(m => months[m._id.month-1]), datasets: [{ data: monthlyApps.map(m => m.count), backgroundColor: '#ff4f00', borderRadius: 6, maxBarThickness: 26 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#f4efe7' } }, x: { grid: { display: false } } } }
       });
 
-      const deptStats = charts.deptStats || [];
-      dashCharts.dept = new Chart(document.getElementById('deptChart'), {
-        type: 'bar',
-        data: {
-          labels: deptStats.map(d => d._id || 'Unknown'),
-          datasets: [{ data: deptStats.map(d => d.count), backgroundColor: COLORS, borderRadius: 6 }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
+      // hero sparkline (real monthly data)
+      const sparkEl = document.getElementById('heroSpark');
+      if (sparkEl) dashCharts.spark = new Chart(sparkEl, {
+        type: 'line',
+        data: { labels: monthlyApps.map(m => months[m._id.month-1]), datasets: [{ data: monthlyApps.map(m => m.count), borderColor: '#ff4f00', backgroundColor: 'rgba(255,79,0,0.10)', fill: true, tension: 0.4, borderWidth: 2, pointRadius: 0 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false } } }
       });
 
     } catch(err) { content.innerHTML = `<div class="error-msg">Failed to load dashboard: ${err.message}</div>`; }
   },
+
+  _kpi: (icon, tint, value, label) => `
+    <div class="kpi-card">
+      <div class="kpi-top"><span class="kpi-ico ${tint}"><i data-lucide="${icon}"></i></span></div>
+      <div class="kpi-val">${value}</div>
+      <div class="kpi-label">${label}</div>
+    </div>`,
+
+  _qa: (module, icon, tint, title, sub) => `
+    <button class="qa-card" onclick="App.navigate('${module}')">
+      <span class="qa-ico ${tint}"><i data-lucide="${icon}"></i></span>
+      <span><span class="qa-t" style="display:block">${title}</span><span class="qa-s">${sub}</span></span>
+      <i data-lucide="chevron-right" class="qa-chev"></i>
+    </button>`,
 
   _renderMentor: async (content) => {
     try {

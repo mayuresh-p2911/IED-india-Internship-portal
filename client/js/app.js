@@ -404,7 +404,8 @@ const App = (() => {
   const boot = async () => {
     Auth.init();
     if (!Auth.isAuthenticated()) {
-      document.getElementById('login-page').classList.remove('hidden');
+      document.getElementById('landing-page').classList.remove('hidden');
+      document.getElementById('login-page').classList.add('hidden');
       document.getElementById('signup-page').classList.add('hidden');
       document.getElementById('app').classList.add('hidden');
       lucide.createIcons();
@@ -421,6 +422,7 @@ const App = (() => {
       return;
     }
 
+    document.getElementById('landing-page').classList.add('hidden');
     document.getElementById('login-page').classList.add('hidden');
     document.getElementById('signup-page').classList.add('hidden');
     document.getElementById('apply-page').classList.add('hidden');
