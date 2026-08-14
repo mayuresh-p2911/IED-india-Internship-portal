@@ -11,16 +11,25 @@ const register = async (req, res) => {
     if (!name || !email || !password) {
       return res.status(400).json({ success: false, message: 'Name, email and password are required' });
     }
-    const existing = await User.findOne({ email });
+    const cleanEmail = email.trim().toLowerCase();
+    const existing = await User.findOne({ email: cleanEmail });
     if (existing) {
       return res.status(400).json({ success: false, message: 'An account with this email already exists' });
     }
     const user = await User.create({
-      name, email, password, phone: phone || '', college: college || '',
-      department: department || '', role: 'intern'
+      name: name.trim(),
+      email: cleanEmail,
+      password,
+      phone: phone ? phone.trim() : '',
+      college: college ? college.trim() : '',
+      department: department ? department.trim() : '',
+      role: 'intern'
     });
     res.status(201).json({ success: true, token: generateToken(user._id), user });
   } catch (err) {
+    if (err.code === 11000) {
+      return res.status(400).json({ success: false, message: 'An account with this email already exists' });
+    }
     res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -31,7 +40,8 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ success: false, message: 'Email and password required' });
-    const user = await User.findOne({ email });
+    const cleanEmail = email.trim().toLowerCase();
+    const user = await User.findOne({ email: cleanEmail });
     if (!user || !(await user.matchPassword(password))) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }

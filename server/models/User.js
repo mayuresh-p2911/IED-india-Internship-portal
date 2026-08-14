@@ -3,13 +3,13 @@ const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
   name:       { type: String, required: true, trim: true },
-  email:      { type: String, required: true, unique: true, lowercase: true },
+  email:      { type: String, required: true, unique: true, lowercase: true, trim: true },
   password:   { type: String, required: true, minlength: 6 },
   role:       { type: String, enum: ['admin', 'hr', 'mentor', 'intern'], default: 'intern' },
-  department: { type: String, default: '' },
-  phone:      { type: String, default: '' },
+  department: { type: String, default: '', trim: true },
+  phone:      { type: String, default: '', trim: true },
   photo:      { type: String, default: '' },
-  college:    { type: String, default: '' },
+  college:    { type: String, default: '', trim: true },
   isActive:   { type: Boolean, default: true },
   internshipStart: { type: Date },
   internshipEnd:   { type: Date },

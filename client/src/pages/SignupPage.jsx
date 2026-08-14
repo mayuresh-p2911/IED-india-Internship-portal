@@ -21,7 +21,14 @@ export function SignupPage({ onSignupSuccess, onGoToLogin, onGoToHome }) {
     setLoading(true);
 
     try {
-      const userData = { name, email, password, phone, college, department };
+      const userData = {
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        password,
+        phone: phone.trim(),
+        college: college.trim(),
+        department
+      };
       await register(userData);
       if (onSignupSuccess) onSignupSuccess();
     } catch (err) {

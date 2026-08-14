@@ -29,7 +29,9 @@ const getUser = async (req, res) => {
 // @route POST /api/users
 const createUser = async (req, res) => {
   try {
-    const user = await User.create(req.body);
+    const data = { ...req.body };
+    if (data.email) data.email = data.email.trim().toLowerCase();
+    const user = await User.create(data);
     res.status(201).json({ success: true, user });
   } catch (err) {
     if (err.code === 11000) return res.status(400).json({ success: false, message: 'Email already exists' });
