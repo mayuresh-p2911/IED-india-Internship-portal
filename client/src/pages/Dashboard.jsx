@@ -239,8 +239,12 @@ export function Dashboard({ onNavigate }) {
     // Monthly Bar chart setup
     const monthlyApps = charts.monthlyApps || [];
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const getMonthLabel = (m) => {
+      const monthNum = m?._id?.month;
+      return (monthNum && monthNum >= 1 && monthNum <= 12) ? months[monthNum - 1] : 'Unknown';
+    };
     const barData = {
-      labels: monthlyApps.map((m) => months[m._id.month - 1]),
+      labels: monthlyApps.map(getMonthLabel),
       datasets: [
         {
           data: monthlyApps.map((m) => m.count),
@@ -272,7 +276,7 @@ export function Dashboard({ onNavigate }) {
 
     // Hero sparkline data
     const sparkData = {
-      labels: monthlyApps.map((m) => months[m._id.month - 1]),
+      labels: monthlyApps.map(getMonthLabel),
       datasets: [
         {
           data: monthlyApps.map((m) => m.count),
@@ -608,7 +612,7 @@ export function Dashboard({ onNavigate }) {
       <>
         <div className="welcome-banner">
           <div className="welcome-text">
-            <h2>Good {greeting()}, <span>{user.name.split(' ')[0]}</span>!</h2>
+            <h2>Good {greeting()}, <span>{(user?.name || 'there').split(' ')[0]}</span>!</h2>
             <p>You have {tasks.length} task(s) awaiting your review</p>
           </div>
           <div className="welcome-emoji">
@@ -747,7 +751,7 @@ export function Dashboard({ onNavigate }) {
       <>
         <div className="welcome-banner">
           <div className="welcome-text">
-            <h2>Good {greeting()}, <span>{user.name.split(' ')[0]}</span>! {getGreetingEmoji()}</h2>
+            <h2>Good {greeting()}, <span>{(user?.name || 'there').split(' ')[0]}</span>! {getGreetingEmoji()}</h2>
             <p>
               {user.department || ''} Intern · {user.college || ''}
             </p>

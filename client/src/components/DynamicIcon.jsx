@@ -17,7 +17,8 @@ export function DynamicIcon({ name, ...props }) {
   };
 
   const nameToUse = specialMap[name] || pascalName;
-  const IconComponent = Icons[nameToUse] || Icons[name] || Icons.HelpCircle;
+  const IconComponent = Icons[nameToUse] || Icons[name] || Icons.HelpCircle || Icons.CircleHelp;
+  if (!IconComponent) return null;
   return <IconComponent {...props} />;
 }
 

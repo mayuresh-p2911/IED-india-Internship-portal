@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider, useToast } from './components/Toast';
 import { ModalProvider } from './components/Modal';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import DashboardLayout from './components/Layout/DashboardLayout';
 
 // Pages
@@ -456,13 +457,15 @@ function AppContent() {
 
 export function App() {
   return (
-    <AuthProvider>
-      <ToastProvider>
-        <ModalProvider>
-          <AppContent />
-        </ModalProvider>
-      </ToastProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <ToastProvider>
+          <ModalProvider>
+            <AppContent />
+          </ModalProvider>
+        </ToastProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

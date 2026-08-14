@@ -97,7 +97,12 @@ export function Analytics() {
   const monthly = charts.monthlyApps || [];
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const monthlyData = {
-    labels: monthly.map((m) => `${months[m._id.month - 1]} ${m._id.year}`),
+    labels: monthly.map((m) => {
+      const monthNum = m?._id?.month;
+      const monthName = (monthNum && monthNum >= 1 && monthNum <= 12) ? months[monthNum - 1] : 'Unknown';
+      const year = m?._id?.year || '';
+      return `${monthName} ${year}`.trim();
+    }),
     datasets: [
       {
         label: 'Applications',
