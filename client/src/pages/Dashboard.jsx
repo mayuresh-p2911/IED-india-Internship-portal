@@ -114,11 +114,14 @@ export function Dashboard({ onNavigate }) {
   // Load Intern Dashboard
   const loadIntern = async () => {
     try {
+      const now = new Date();
+      const localDate = now.toLocaleDateString('en-CA');
+      const tz = now.getTimezoneOffset();
       const [statsData, tasksData, announcementsData, todayData] = await Promise.all([
         API.get('/analytics/intern'),
         API.get('/tasks'),
         API.get('/announcements'),
-        API.get('/attendance/today')
+        API.get(`/attendance/today?date=${localDate}&tz=${tz}`)
       ]);
       setInternData({
         stats: statsData.stats || {},
@@ -165,8 +168,18 @@ export function Dashboard({ onNavigate }) {
           });
         } catch {}
       }
+      const now = new Date();
+      const clientTime = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      const clientDate = now.toLocaleDateString('en-CA');
+      const timezoneOffset = now.getTimezoneOffset();
       const type = internData?.wfh ? 'wfh' : 'office';
-      const result = await API.post('/attendance/mark', { type, location });
+      const result = await API.post('/attendance/mark', {
+        type,
+        location,
+        clientTime,
+        clientDate,
+        timezoneOffset
+      });
       showToast(result.message, 'success');
       loadIntern();
     } catch (err) {

@@ -96,8 +96,11 @@ export function Attendance({ onNavigate }) {
     setLoading(true);
     try {
       const [y, m] = selectedMonth.split('-');
+      const now = new Date();
+      const localDate = now.toLocaleDateString('en-CA');
+      const tz = now.getTimezoneOffset();
       const [todayData, reportData] = await Promise.all([
-        API.get('/attendance/today'),
+        API.get(`/attendance/today?date=${localDate}&tz=${tz}`),
         API.get(`/attendance/report?month=${m}&year=${y}`)
       ]);
       setTodayRecord(todayData.record || null);
@@ -157,7 +160,17 @@ export function Attendance({ onNavigate }) {
       } catch {}
     }
     try {
-      const result = await API.post('/attendance/mark', { type: wfh ? 'wfh' : 'office', location });
+      const now = new Date();
+      const clientTime = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      const clientDate = now.toLocaleDateString('en-CA');
+      const timezoneOffset = now.getTimezoneOffset();
+      const result = await API.post('/attendance/mark', {
+        type: wfh ? 'wfh' : 'office',
+        location,
+        clientTime,
+        clientDate,
+        timezoneOffset
+      });
       showToast(result.message, 'success');
       fetchInternData();
     } catch (err) {
@@ -167,7 +180,15 @@ export function Attendance({ onNavigate }) {
 
   const handleMarkCheckOut = async () => {
     try {
-      const result = await API.post('/attendance/mark', {});
+      const now = new Date();
+      const clientTime = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      const clientDate = now.toLocaleDateString('en-CA');
+      const timezoneOffset = now.getTimezoneOffset();
+      const result = await API.post('/attendance/mark', {
+        clientTime,
+        clientDate,
+        timezoneOffset
+      });
       showToast(result.message, 'success');
       fetchInternData();
     } catch (err) {

@@ -1,6 +1,26 @@
 const Attendance = require('../models/Attendance');
 const User = require('../models/User');
 
+// Helper to get local date string YYYY-MM-DD from server Date using client timezone offset (in minutes)
+function getLocalDateStr(dateObj = new Date(), offsetMinutes = null) {
+  if (offsetMinutes !== null && offsetMinutes !== undefined && !isNaN(offsetMinutes)) {
+    const localMs = dateObj.getTime() - (Number(offsetMinutes) * 60 * 1000);
+    return new Date(localMs).toISOString().split('T')[0];
+  }
+  return dateObj.toISOString().split('T')[0];
+}
+
+// Helper to get local time string HH:mm from server Date using client timezone offset (in minutes)
+function getLocalTimeStr(dateObj = new Date(), offsetMinutes = null) {
+  if (offsetMinutes !== null && offsetMinutes !== undefined && !isNaN(offsetMinutes)) {
+    const localMs = dateObj.getTime() - (Number(offsetMinutes) * 60 * 1000);
+    return new Date(localMs).toISOString().slice(11, 16);
+  }
+  const hours = String(dateObj.getHours()).padStart(2, '0');
+  const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
+}
+
 // @desc  Get attendance records
 // @route GET /api/attendance
 const getAttendance = async (req, res) => {
@@ -23,19 +43,30 @@ const getAttendance = async (req, res) => {
 // @route POST /api/attendance/mark
 const markAttendance = async (req, res) => {
   try {
-    const today = new Date().toISOString().split('T')[0];
+    const { type, location, clientTime, clientDate, timezoneOffset } = req.body;
+    const now = new Date();
+    
+    // Determine user's local date (e.g., 2026-08-14)
+    const today = clientDate || getLocalDateStr(now, timezoneOffset);
+    
+    // Determine user's local check time (e.g., 22:42)
+    const currentTime = clientTime || getLocalTimeStr(now, timezoneOffset);
+
     const internId = req.user._id;
     const existing = await Attendance.findOne({ internId, date: today });
+    
     if (existing) {
       // Check-out
-      existing.checkOut = new Date().toTimeString().slice(0, 5);
+      existing.checkOut = currentTime;
       await existing.save();
       return res.json({ success: true, message: 'Check-out recorded', record: existing });
     }
-    const { type, location } = req.body;
+    
     const record = await Attendance.create({
-      internId, date: today, type: type || 'office',
-      checkIn: new Date().toTimeString().slice(0, 5),
+      internId,
+      date: today,
+      type: type || 'office',
+      checkIn: currentTime,
       status: type === 'wfh' ? 'wfh' : 'present',
       location: location || {}
     });
@@ -47,7 +78,8 @@ const markAttendance = async (req, res) => {
 // @route GET /api/attendance/today
 const getTodayStatus = async (req, res) => {
   try {
-    const today = new Date().toISOString().split('T')[0];
+    const { date: clientDate, tz: timezoneOffset } = req.query;
+    const today = clientDate || getLocalDateStr(new Date(), timezoneOffset);
     const internId = req.user.role === 'intern' ? req.user._id : req.query.internId;
     const record = await Attendance.findOne({ internId, date: today });
     res.json({ success: true, record, today });
