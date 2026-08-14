@@ -20,7 +20,8 @@ import {
   LogIn,
   LogOut,
   Bell,
-  Pin
+  Pin,
+  ArrowRight
 } from 'lucide-react';
 
 import {
@@ -185,7 +186,16 @@ export function Dashboard({ onNavigate }) {
   // RENDER ADMIN / HR
   // ═══════════════════════════════════════════════════════════
   if (is('admin', 'hr')) {
-    if (!adminData) return null;
+    if (!adminData) {
+      return (
+        <div style={{ padding: '40px', textAlign: 'center' }}>
+          <p className="text-muted">Failed to load dashboard data.</p>
+          <button className="btn btn-primary" onClick={initDashboard} style={{ marginTop: '12px' }}>
+            Retry
+          </button>
+        </div>
+      );
+    }
     const { stats, charts, applications, interviews } = adminData;
     const firstName = (user.name || 'there').split(' ')[0];
     const now = Date.now();
@@ -582,7 +592,16 @@ export function Dashboard({ onNavigate }) {
   // RENDER MENTOR
   // ═══════════════════════════════════════════════════════════
   if (is('mentor')) {
-    if (!mentorData) return null;
+    if (!mentorData) {
+      return (
+        <div style={{ padding: '40px', textAlign: 'center' }}>
+          <p className="text-muted">Failed to load mentor dashboard data.</p>
+          <button className="btn btn-primary" onClick={initDashboard} style={{ marginTop: '12px' }}>
+            Retry
+          </button>
+        </div>
+      );
+    }
     const { stats, tasks, interns } = mentorData;
 
     return (
@@ -710,7 +729,16 @@ export function Dashboard({ onNavigate }) {
   // RENDER INTERN
   // ═══════════════════════════════════════════════════════════
   if (is('intern')) {
-    if (!internData) return null;
+    if (!internData) {
+      return (
+        <div style={{ padding: '40px', textAlign: 'center' }}>
+          <p className="text-muted">Failed to load intern dashboard data.</p>
+          <button className="btn btn-primary" onClick={initDashboard} style={{ marginTop: '12px' }}>
+            Retry
+          </button>
+        </div>
+      );
+    }
     const { stats, tasks, announcements, todayRecord, wfh } = internData;
     const checkedIn = !!todayRecord?.checkIn;
     const checkedOut = !!todayRecord?.checkOut;
@@ -920,7 +948,11 @@ export function Dashboard({ onNavigate }) {
     );
   }
 
-  return null;
+  return (
+    <div style={{ padding: '40px', textAlign: 'center' }}>
+      <p className="text-muted">No dashboard available for role: {user?.role || 'unknown'}</p>
+    </div>
+  );
 }
 
 export default Dashboard;
