@@ -4,17 +4,30 @@
 
 const BASE = '/api';
 
-const getHeaders = () => ({
-  'Content-Type': 'application/json',
-  'Authorization': `Bearer ${localStorage.getItem('ied_token') || ''}`
-});
+const getToken = () => {
+  const t = localStorage.getItem('ied_token');
+  if (!t || t === 'null' || t === 'undefined') return null;
+  return t;
+};
+
+const getHeaders = () => {
+  const token = getToken();
+  const headers = {
+    'Content-Type': 'application/json'
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+};
 
 const request = async (method, path, body = null, isFormData = false) => {
+  const token = getToken();
   const formPayload = isFormData || (typeof FormData !== 'undefined' && body instanceof FormData);
   const opts = {
     method,
     headers: formPayload
-      ? { 'Authorization': `Bearer ${localStorage.getItem('ied_token') || ''}` }
+      ? (token ? { 'Authorization': `Bearer ${token}` } : {})
       : getHeaders()
   };
   if (body) opts.body = formPayload ? body : JSON.stringify(body);
@@ -27,6 +40,11 @@ const request = async (method, path, body = null, isFormData = false) => {
     } else {
       const text = await res.text();
       data = { message: text || `HTTP ${res.status}: ${res.statusText}` };
+    }
+    if (res.status === 401) {
+      localStorage.removeItem('ied_token');
+      localStorage.removeItem('ied_user');
+      window.dispatchEvent(new CustomEvent('auth:unauthorized', { detail: data }));
     }
     if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`);
     return data;

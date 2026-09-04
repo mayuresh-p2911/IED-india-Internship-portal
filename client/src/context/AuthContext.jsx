@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════
 // IED India IMS — Auth Context (React port of auth.js)
 // ═══════════════════════════════════════════════════════════
-import { createContext, useContext, useState, useCallback, useMemo } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import API from '../services/api';
 
 const AuthContext = createContext(null);
@@ -9,13 +9,52 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     const s = localStorage.getItem('ied_user');
-    if (s) { try { return JSON.parse(s); } catch { return null; } }
+    if (s && s !== 'null' && s !== 'undefined') {
+      try { return JSON.parse(s); } catch { return null; }
+    }
     return null;
   });
-  const [token, setToken] = useState(() => localStorage.getItem('ied_token'));
+
+  const [token, setToken] = useState(() => {
+    const t = localStorage.getItem('ied_token');
+    return (t && t !== 'null' && t !== 'undefined') ? t : null;
+  });
 
   const isAuthenticated = useMemo(() => !!token && !!user, [token, user]);
   const role = useMemo(() => user?.role, [user]);
+
+  const logout = useCallback(() => {
+    setToken(null);
+    setUser(null);
+    localStorage.removeItem('ied_token');
+    localStorage.removeItem('ied_user');
+  }, []);
+
+  const refreshUser = useCallback(async () => {
+    try {
+      const data = await API.get('/auth/me');
+      setUser(data.user);
+      localStorage.setItem('ied_user', JSON.stringify(data.user));
+    } catch {
+      logout();
+    }
+  }, [logout]);
+
+  // Listen for unauthorized 401 events dispatched from API helper
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      logout();
+    };
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
+  }, [logout]);
+
+  // Validate active token with server on initial mount
+  useEffect(() => {
+    if (token) {
+      refreshUser();
+    }
+  }, []);
 
   const login = useCallback(async (email, password) => {
     const data = await API.post('/auth/login', { email, password });
@@ -35,29 +74,15 @@ export function AuthProvider({ children }) {
     return data.user;
   }, []);
 
-  const logout = useCallback(() => {
-    setToken(null);
-    setUser(null);
-    localStorage.removeItem('ied_token');
-    localStorage.removeItem('ied_user');
-  }, []);
-
-  const refreshUser = useCallback(async () => {
-    try {
-      const data = await API.get('/auth/me');
-      setUser(data.user);
-      localStorage.setItem('ied_user', JSON.stringify(data.user));
-    } catch {
-      logout();
-    }
-  }, [logout]);
-
   const updateUser = useCallback((u) => {
     setUser(u);
     localStorage.setItem('ied_user', JSON.stringify(u));
   }, []);
 
-  const is = useCallback((...roles) => roles.includes(user?.role), [user]);
+  const is = useCallback((...roles) => {
+    const userRole = user?.role;
+    return roles.includes(userRole) || (roles.includes('admin') && userRole === 'superadmin');
+  }, [user]);
 
   const value = useMemo(() => ({
     user, token, role, isAuthenticated,

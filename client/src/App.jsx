@@ -72,6 +72,16 @@ function AppContent() {
     }
   }, [isAuthenticated]);
 
+  // Handle session expiration or invalid tokens gracefully
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      showToast('Session expired. Please log in again.', 'info');
+      setPage('login');
+    };
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
+  }, []);
+
   const handleOpenEditProfile = () => {
     if (!user) return;
     setProfileForm({
