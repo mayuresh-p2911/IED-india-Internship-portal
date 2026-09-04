@@ -85,6 +85,11 @@ app.use('/api/certificates',  require('./routes/certificates.routes'));
 app.use('/api/leaves',        require('./routes/leaves.routes'));
 app.use('/api/analytics',     require('./routes/analytics.routes'));
 
+// Return JSON 404 for unhandled API routes
+app.all('/api/*', (req, res) => {
+  res.status(404).json({ success: false, message: 'API endpoint not found' });
+});
+
 // Serve client SPA for all non-API routes
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/dist/index.html'));

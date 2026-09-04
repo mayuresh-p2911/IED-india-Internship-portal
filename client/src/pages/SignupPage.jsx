@@ -11,7 +11,7 @@ export function SignupPage({ onSignupSuccess, onGoToLogin, onGoToHome }) {
   const [phone, setPhone] = useState('');
   const [college, setCollege] = useState('');
   const [department, setDepartment] = useState('');
-  
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 

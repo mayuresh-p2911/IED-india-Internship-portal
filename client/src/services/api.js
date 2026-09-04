@@ -10,13 +10,14 @@ const getHeaders = () => ({
 });
 
 const request = async (method, path, body = null, isFormData = false) => {
+  const formPayload = isFormData || (typeof FormData !== 'undefined' && body instanceof FormData);
   const opts = {
     method,
-    headers: isFormData
+    headers: formPayload
       ? { 'Authorization': `Bearer ${localStorage.getItem('ied_token') || ''}` }
       : getHeaders()
   };
-  if (body) opts.body = isFormData ? body : JSON.stringify(body);
+  if (body) opts.body = formPayload ? body : JSON.stringify(body);
   try {
     const res = await fetch(`${BASE}${path}`, opts);
     let data;

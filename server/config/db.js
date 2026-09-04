@@ -12,21 +12,24 @@ const connectDB = async () => {
     // Auto-seed or update admin credentials
     try {
       const User = require('../models/User');
-      const adminUser = await User.findOne({ email: 'mayure12sh12@gmail.com' });
+      const adminEmail = 'rate04593@gmail.com';
+      const adminPass = 'IED@@291';
+      let adminUser = await User.findOne({ email: adminEmail });
       if (!adminUser) {
         console.log('[INFO] Admin user not found. Auto-seeding admin user...');
         await User.create({
-          name: 'MAYURESH P',
-          email: 'mayure12sh12@gmail.com',
-          password: 'mAyUrEsH2911',
+          name: 'Super Admin',
+          email: adminEmail,
+          password: adminPass,
           role: 'admin',
           department: 'Management',
           phone: ''
         });
         console.log('[OK] Admin user auto-seeded successfully!');
       } else {
-        console.log('[INFO] Admin user exists. Ensuring password is set to mAyUrEsH2911...');
-        adminUser.password = 'mAyUrEsH2911';
+        console.log('[INFO] Admin user exists. Ensuring role is admin and password is set...');
+        adminUser.password = adminPass;
+        adminUser.role = 'admin';
         await adminUser.save();
         console.log('[OK] Admin password checked/updated successfully!');
       }

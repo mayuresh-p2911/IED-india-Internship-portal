@@ -8,6 +8,7 @@ const onboardingSchema = new mongoose.Schema({
   agreementUploaded:  { type: Boolean, default: false },
   agreementFile:      { type: String, default: '' },
   internId_generated: { type: String, default: '' },
+  internshipId:       { type: String, default: '' },
   orientationDate:    { type: Date },
   orientationDone:    { type: Boolean, default: false },
   welcomeEmailSent:   { type: Boolean, default: false },

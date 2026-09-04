@@ -14,16 +14,36 @@ import {
   RefreshCw,
   CreditCard,
   Camera,
-  FileText
+  FileText,
+  ExternalLink,
+  Download
 } from 'lucide-react';
 
+export const getDocDetails = (docs, key) => {
+  if (!docs) return { uploaded: false, path: '' };
+  const val = docs[key];
+  if (!val) return { uploaded: false, path: '' };
+  if (typeof val === 'string') {
+    if (val === 'uploaded') return { uploaded: true, path: '' };
+    return { uploaded: true, path: val };
+  }
+  if (typeof val === 'object') {
+    return {
+      uploaded: Boolean(val.uploaded || val.path),
+      path: val.path || ''
+    };
+  }
+  return { uploaded: Boolean(val), path: '' };
+};
+
 export function Onboarding() {
-  const { user, is } = useAuth();
+  const { is } = useAuth();
   const { showToast } = useToast();
 
   const [records, setRecords] = useState([]);
   const [internRecord, setInternRecord] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [uploadingDoc, setUploadingDoc] = useState(null);
 
   // Admin Modal State
   const [modalOpen, setModalOpen] = useState(false);
@@ -40,14 +60,21 @@ export function Onboarding() {
     internshipId: '',
     notes: '',
     documents: {
-      resume: '',
-      aadhaar: '',
-      collegeId: '',
-      photo: ''
+      resume: { uploaded: false, path: '' },
+      aadhaar: { uploaded: false, path: '' },
+      collegeId: { uploaded: false, path: '' },
+      photo: { uploaded: false, path: '' }
     }
   });
 
   const isIntern = is('intern');
+
+  const docItems = [
+    { key: 'resume', label: 'Resume', icon: FileText },
+    { key: 'aadhaar', label: 'Aadhaar Card', icon: CreditCard },
+    { key: 'collegeId', label: 'College ID', icon: IdCard },
+    { key: 'photo', label: 'Profile Photo', icon: Camera }
+  ];
 
   const progressPercent = (ob) => {
     if (!ob) return 0;
@@ -61,10 +88,11 @@ export function Onboarding() {
     try {
       if (isIntern) {
         const res = await API.get('/onboarding/me');
-        setInternRecord(res);
+        setInternRecord(res.record || res || null);
       } else {
         const res = await API.get('/onboarding');
-        setRecords(res.onboarding || res || []);
+        const list = res.records || res.onboarding || (Array.isArray(res) ? res : []);
+        setRecords(list);
       }
     } catch (err) {
       if (isIntern) {
@@ -95,10 +123,10 @@ export function Onboarding() {
       internshipId: ob.internshipId || ob.internId?.internshipId || '',
       notes: ob.notes || '',
       documents: {
-        resume: docs.resume || '',
-        aadhaar: docs.aadhaar || '',
-        collegeId: docs.collegeId || '',
-        photo: docs.photo || ''
+        resume: docs.resume || { uploaded: false, path: '' },
+        aadhaar: docs.aadhaar || { uploaded: false, path: '' },
+        collegeId: docs.collegeId || { uploaded: false, path: '' },
+        photo: docs.photo || { uploaded: false, path: '' }
       }
     });
     setModalOpen(true);
@@ -111,16 +139,6 @@ export function Onboarding() {
   const handleFormChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleDocStatusMark = (docName) => {
-    setFormData((prev) => ({
-      ...prev,
-      documents: {
-        ...prev.documents,
-        [docName]: 'uploaded'
-      }
-    }));
   };
 
   const handleSaveChecklist = async (e) => {
@@ -146,26 +164,72 @@ export function Onboarding() {
       await API.put(`/onboarding/${selectedRecord._id}`, payload);
       showToast('Onboarding checklist saved!', 'success');
       setModalOpen(false);
-      fetchRecords();
+      await fetchRecords();
     } catch (err) {
       showToast(err.message || 'Failed to save onboarding checklist', 'error');
     }
   };
 
+  // Intern Upload Handler
   const handleUploadDoc = async (type, e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    showToast(`Uploading ${type}…`, 'info');
+    const typeLabel = docItems.find((d) => d.key === type)?.label || type;
+    setUploadingDoc(type);
+    showToast(`Uploading ${typeLabel}…`, 'info');
+
     try {
       const fd = new FormData();
       fd.append('document', file);
       fd.append('type', type);
-      await API.post('/onboarding/upload', fd);
-      showToast('Document uploaded successfully!', 'success');
-      fetchRecords();
+      await API.upload('/onboarding/upload', fd);
+      showToast(`${typeLabel} uploaded successfully!`, 'success');
+      await fetchRecords();
     } catch (err) {
       showToast(err.message || 'Upload failed', 'error');
+    } finally {
+      setUploadingDoc(null);
+      e.target.value = '';
+    }
+  };
+
+  // Admin Upload Handler (upload on behalf of an intern)
+  const handleAdminUploadDoc = async (type, internId, e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const typeLabel = docItems.find((d) => d.key === type)?.label || type;
+    setUploadingDoc(type);
+    showToast(`Uploading ${typeLabel}…`, 'info');
+
+    try {
+      const fd = new FormData();
+      fd.append('document', file);
+      fd.append('type', type);
+      if (internId) {
+        fd.append('internId', internId);
+      }
+      const res = await API.upload('/onboarding/upload', fd);
+      showToast(`${typeLabel} uploaded successfully!`, 'success');
+
+      if (res.record) {
+        setSelectedRecord(res.record);
+        const docs = res.record.documents || {};
+        setFormData((prev) => ({
+          ...prev,
+          documents: {
+            ...prev.documents,
+            [type]: docs[type] || { uploaded: true, path: res.filePath }
+          }
+        }));
+      }
+      await fetchRecords();
+    } catch (err) {
+      showToast(err.message || 'Upload failed', 'error');
+    } finally {
+      setUploadingDoc(null);
+      e.target.value = '';
     }
   };
 
@@ -178,7 +242,7 @@ export function Onboarding() {
   }
 
   // ═══════════════════════════════════════════════════════════
-  // RENDER INTERN
+  // RENDER INTERN VIEW
   // ═══════════════════════════════════════════════════════════
   if (isIntern) {
     if (!internRecord) {
@@ -200,13 +264,6 @@ export function Onboarding() {
       { key: 'internIdGenerated', label: 'Intern ID Generated', icon: IdCard },
       { key: 'orientationDone', label: 'Orientation Done', icon: Users },
       { key: 'welcomeEmailSent', label: 'Welcome Email Sent', icon: Mail }
-    ];
-
-    const docItems = [
-      { key: 'resume', label: 'Resume', icon: FileText },
-      { key: 'aadhaar', label: 'Aadhaar Card', icon: CreditCard },
-      { key: 'collegeId', label: 'College ID', icon: IdCard },
-      { key: 'photo', label: 'Profile Photo', icon: Camera }
     ];
 
     return (
@@ -272,7 +329,6 @@ export function Onboarding() {
                       gap: '.75rem',
                       padding: '.75rem',
                       background: 'rgba(255,255,255,0.03)',
-                      borderParagraph: '8px',
                       borderRadius: '8px',
                       borderLeft: `3px solid ${isDone ? '#00e676' : 'rgba(255,255,255,0.1)'}`
                     }}
@@ -293,23 +349,98 @@ export function Onboarding() {
 
         {/* Document Uploads */}
         <div className="glass-card" style={{ padding: '1.5rem', marginTop: '1.5rem' }}>
-          <h3 style={{ color: 'var(--text-primary)', marginBottom: '1rem' }}>Document Uploads</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h3 style={{ color: 'var(--text-primary)', margin: 0 }}>Document Uploads</h3>
+            <span style={{ fontSize: '.8rem', color: 'var(--text-muted)' }}>Supported formats: PDF, DOC, DOCX, PNG, JPG (Max 10MB)</span>
+          </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(240px,1fr))', gap: '1rem' }}>
             {docItems.map((item) => {
               const Icon = item.icon;
-              const isUploaded = !!docs[item.key];
+              const docInfo = getDocDetails(docs, item.key);
+              const isBusy = uploadingDoc === item.key;
+              const isImage = item.key === 'photo' || (docInfo.path && /\.(jpg|jpeg|png|webp)$/i.test(docInfo.path));
+
               return (
-                <div key={item.key} style={{ padding: '1rem', background: 'rgba(255,255,255,0.04)', borderRadius: '8px', textAlign: 'center' }}>
-                  <Icon size={32} style={{ color: isUploaded ? '#00e676' : 'var(--text-muted)', marginBottom: '.5rem' }} />
-                  <div style={{ fontWeight: 500, color: 'var(--text-primary)', marginBottom: '.25rem' }}>{item.label}</div>
-                  <div style={{ fontSize: '.75rem', color: isUploaded ? '#00e676' : '#ff9100', marginBottom: '.75rem' }}>
-                    {isUploaded ? '✓ Uploaded' : 'Not uploaded'}
+                <div
+                  key={item.key}
+                  style={{
+                    padding: '1.25rem',
+                    background: docInfo.uploaded ? 'rgba(0,230,118,0.04)' : 'rgba(255,255,255,0.04)',
+                    border: `1px solid ${docInfo.uploaded ? 'rgba(0,230,118,0.25)' : 'rgba(255,255,255,0.08)'}`,
+                    borderRadius: '10px',
+                    textAlign: 'center',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    transition: 'all .2s ease'
+                  }}
+                >
+                  {isImage && docInfo.path ? (
+                    <img
+                      src={docInfo.path}
+                      alt={item.label}
+                      style={{
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '8px',
+                        objectFit: 'cover',
+                        marginBottom: '.5rem',
+                        border: '1px solid rgba(255,255,255,0.1)'
+                      }}
+                    />
+                  ) : (
+                    <Icon size={32} style={{ color: docInfo.uploaded ? '#00e676' : 'var(--text-muted)', marginBottom: '.5rem' }} />
+                  )}
+
+                  <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '.25rem' }}>{item.label}</div>
+                  <div style={{ fontSize: '.75rem', fontWeight: 500, color: docInfo.uploaded ? '#00e676' : '#ff9100', marginBottom: '.75rem' }}>
+                    {docInfo.uploaded ? '✓ Uploaded' : 'Not uploaded'}
                   </div>
-                  <label className={`btn btn-sm ${isUploaded ? 'btn-secondary' : 'btn-primary'}`} style={{ cursor: 'pointer' }}>
-                    {isUploaded ? <RefreshCw size={12} style={{ marginRight: '4px' }} /> : <Upload size={12} style={{ marginRight: '4px' }} />}
-                    <span>{isUploaded ? 'Replace' : 'Upload'}</span>
-                    <input type="file" style={{ display: 'none' }} onChange={(e) => handleUploadDoc(item.key, e)} />
-                  </label>
+
+                  <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                    {docInfo.uploaded && docInfo.path && (
+                      <a
+                        href={docInfo.path}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-sm btn-ghost"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}
+                      >
+                        <ExternalLink size={13} /> View
+                      </a>
+                    )}
+
+                    <label
+                      className={`btn btn-sm ${docInfo.uploaded ? 'btn-secondary' : 'btn-primary'}`}
+                      style={{
+                        cursor: isBusy ? 'wait' : 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        opacity: isBusy ? 0.7 : 1
+                      }}
+                    >
+                      {isBusy ? (
+                        <>
+                          <RefreshCw size={13} className="spin" />
+                          <span>Uploading…</span>
+                        </>
+                      ) : (
+                        <>
+                          {docInfo.uploaded ? <RefreshCw size={13} /> : <Upload size={13} />}
+                          <span>{docInfo.uploaded ? 'Replace' : 'Upload'}</span>
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        disabled={isBusy}
+                        accept={item.key === 'photo' ? 'image/*' : '.pdf,.doc,.docx,.png,.jpg,.jpeg'}
+                        style={{ display: 'none' }}
+                        onChange={(e) => handleUploadDoc(item.key, e)}
+                      />
+                    </label>
+                  </div>
                 </div>
               );
             })}
@@ -327,7 +458,7 @@ export function Onboarding() {
   }
 
   // ═══════════════════════════════════════════════════════════
-  // RENDER ADMIN / HR
+  // RENDER ADMIN / SUPER ADMIN / HR VIEW
   // ═══════════════════════════════════════════════════════════
   return (
     <>
@@ -342,13 +473,18 @@ export function Onboarding() {
             <p>No onboarding records found</p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(320px,1fr))', gap: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(340px,1fr))', gap: '1.25rem' }}>
             {records.map((ob) => {
               const pct = progressPercent(ob);
               const color = pct === 100 ? '#00e676' : pct >= 50 ? '#ffd700' : '#ff9100';
               const intern = ob.internId || {};
+              const docs = ob.documents || {};
+              const uploadedDocsList = docItems.filter((d) => getDocDetails(docs, d.key).uploaded);
+              const uploadedCount = uploadedDocsList.length;
+
               return (
                 <div className="glass-card" style={{ padding: '1.25rem' }} key={ob._id}>
+                  {/* Intern header */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1rem' }}>
                     <div
                       style={{
@@ -368,13 +504,20 @@ export function Onboarding() {
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{intern.name || 'Unknown'}</div>
-                      <div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>{intern.department || ''}</div>
+                      <div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>
+                        {intern.department ? `${intern.department} • ` : ''}
+                        {intern.email || ''}
+                      </div>
                     </div>
                     <div style={{ fontWeight: 700, fontSize: '1.1rem', color }}>{pct}%</div>
                   </div>
+
+                  {/* Progress bar */}
                   <div className="progress-bar" style={{ marginBottom: '.5rem' }}>
                     <div className="progress-fill" style={{ width: `${pct}%`, backgroundColor: color }}></div>
                   </div>
+
+                  {/* Checklist badges */}
                   <div style={{ display: 'flex', gap: '.4rem', flexWrap: 'wrap', marginBottom: '.75rem' }}>
                     {ob.offerLetterSent && <span className="status-badge status-active" style={{ fontSize: '.65rem' }}>Offer Sent</span>}
                     {ob.agreementUploaded && <span className="status-badge status-active" style={{ fontSize: '.65rem' }}>Agreement</span>}
@@ -382,8 +525,84 @@ export function Onboarding() {
                     {ob.orientationDone && <span className="status-badge status-active" style={{ fontSize: '.65rem' }}>Orientation</span>}
                     {ob.welcomeEmailSent && <span className="status-badge status-active" style={{ fontSize: '.65rem' }}>Welcome Email</span>}
                   </div>
+
+                  {/* Uploaded Documents Section */}
+                  <div style={{ marginTop: '.75rem', paddingTop: '.75rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '.5rem' }}>
+                      <span style={{ fontSize: '.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>Uploaded Documents</span>
+                      <span
+                        style={{
+                          fontSize: '.7rem',
+                          fontWeight: 600,
+                          color: uploadedCount === 4 ? '#00e676' : uploadedCount > 0 ? '#4f8ef7' : '#ff9100'
+                        }}
+                      >
+                        {uploadedCount}/4 Uploaded
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.4rem', marginBottom: '.85rem' }}>
+                      {docItems.map((item) => {
+                        const doc = getDocDetails(docs, item.key);
+                        return (
+                          <div
+                            key={item.key}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              padding: '.4rem .55rem',
+                              borderRadius: '6px',
+                              background: doc.uploaded ? 'rgba(0,230,118,0.08)' : 'rgba(255,255,255,0.03)',
+                              border: `1px solid ${doc.uploaded ? 'rgba(0,230,118,0.25)' : 'rgba(255,255,255,0.06)'}`,
+                              fontSize: '.72rem'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '.35rem', minWidth: 0, overflow: 'hidden' }}>
+                              <item.icon size={13} style={{ color: doc.uploaded ? '#00e676' : 'var(--text-muted)', flexShrink: 0 }} />
+                              <span
+                                style={{
+                                  color: doc.uploaded ? 'var(--text-primary)' : 'var(--text-muted)',
+                                  textOverflow: 'ellipsis',
+                                  overflow: 'hidden',
+                                  whiteSpace: 'nowrap'
+                                }}
+                              >
+                                {item.label}
+                              </span>
+                            </div>
+                            {doc.uploaded && doc.path ? (
+                              <a
+                                href={doc.path}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="btn btn-xs btn-ghost"
+                                style={{
+                                  padding: '2px 5px',
+                                  fontSize: '.68rem',
+                                  color: '#4f8ef7',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '2px',
+                                  textDecoration: 'none',
+                                  flexShrink: 0
+                                }}
+                                title={`View ${item.label}`}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <ExternalLink size={11} /> View
+                              </a>
+                            ) : (
+                              <span style={{ fontSize: '.65rem', color: '#ff9100', flexShrink: 0 }}>Missing</span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   <button className="btn btn-sm btn-primary open-ob-btn" onClick={() => handleOpenChecklist(ob)} style={{ width: '100%' }}>
-                    <Edit3 size={12} style={{ marginRight: '4px' }} /> Manage Checklist
+                    <Edit3 size={12} style={{ marginRight: '4px' }} /> Manage Checklist & Documents
                   </button>
                 </div>
               );
@@ -392,10 +611,10 @@ export function Onboarding() {
         )}
       </div>
 
-      {/* Checklist Management Modal */}
+      {/* Checklist & Document Management Modal */}
       {modalOpen && selectedRecord && (
         <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setModalOpen(false); }}>
-          <div className="modal glass-card">
+          <div className="modal glass-card" style={{ maxWidth: '640px', width: '90%' }}>
             <div className="modal-header">
               <h3>Onboarding: {selectedRecord.internId?.name || 'Intern'}</h3>
               <button className="modal-close" onClick={() => setModalOpen(false)}>
@@ -472,37 +691,113 @@ export function Onboarding() {
                     })}
                   </div>
 
-                  <h4 style={{ color: 'var(--text-primary)', margin: '.75rem 0' }}>Document Upload Status</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.5rem' }}>
-                    {[
-                      { key: 'resume', label: 'Resume' },
-                      { key: 'aadhaar', label: 'Aadhaar' },
-                      { key: 'collegeId', label: 'College ID' },
-                      { key: 'photo', label: 'Photo' }
-                    ].map((doc) => {
-                      const isUploaded = formData.documents[doc.key] === 'uploaded';
+                  {/* Super Admin Document Status & Viewer */}
+                  <h4 style={{ color: 'var(--text-primary)', margin: '1.25rem 0 .75rem' }}>Uploaded Documents Status</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.75rem' }}>
+                    {docItems.map((doc) => {
+                      const docInfo = getDocDetails(formData.documents, doc.key);
+                      const isBusy = uploadingDoc === doc.key;
+                      const internUserId = selectedRecord.internId?._id || selectedRecord.internId;
+
                       return (
-                        <div style={{ padding: '.6rem', background: 'rgba(255,255,255,0.04)', borderRadius: '8px' }} key={doc.key}>
-                          <div style={{ fontSize: '.8rem', color: 'var(--text-muted)', marginBottom: '.3rem' }}>{doc.label}</div>
-                          <div style={{ display: 'flex', alignItems: 'center', justifySelf: 'stretch', justifyContent: 'space-between' }}>
-                            <span style={{ color: isUploaded ? '#00e676' : '#ff9100', fontSize: '.8rem' }}>
-                              {isUploaded ? '✓ Uploaded' : '✗ Missing'}
-                            </span>
-                            <button
-                              type="button"
-                              className="btn btn-sm btn-ghost"
-                              title="Mark uploaded"
-                              onClick={() => handleDocStatusMark(doc.key)}
+                        <div
+                          style={{
+                            padding: '.75rem',
+                            background: docInfo.uploaded ? 'rgba(0,230,118,0.05)' : 'rgba(255,255,255,0.03)',
+                            border: `1px solid ${docInfo.uploaded ? 'rgba(0,230,118,0.25)' : 'rgba(255,255,255,0.08)'}`,
+                            borderRadius: '8px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '.4rem'
+                          }}
+                          key={doc.key}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}>
+                              <doc.icon size={15} style={{ color: docInfo.uploaded ? '#00e676' : 'var(--text-muted)' }} />
+                              <span style={{ fontSize: '.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>{doc.label}</span>
+                            </div>
+                            <span
+                              style={{
+                                fontSize: '.7rem',
+                                fontWeight: 600,
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                background: docInfo.uploaded ? 'rgba(0,230,118,0.15)' : 'rgba(255,145,0,0.15)',
+                                color: docInfo.uploaded ? '#00e676' : '#ff9100'
+                              }}
                             >
-                              <Upload size={12} />
-                            </button>
+                              {docInfo.uploaded ? '✓ Uploaded' : '✗ Missing'}
+                            </span>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', marginTop: '.25rem', flexWrap: 'wrap' }}>
+                            {docInfo.uploaded && docInfo.path ? (
+                              <>
+                                <a
+                                  href={docInfo.path}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="btn btn-xs btn-primary"
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '3px',
+                                    textDecoration: 'none',
+                                    fontSize: '.72rem',
+                                    padding: '3px 7px'
+                                  }}
+                                >
+                                  <ExternalLink size={12} /> View
+                                </a>
+                                <a
+                                  href={docInfo.path}
+                                  download
+                                  className="btn btn-xs btn-secondary"
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '3px',
+                                    textDecoration: 'none',
+                                    fontSize: '.72rem',
+                                    padding: '3px 7px'
+                                  }}
+                                >
+                                  <Download size={12} /> Download
+                                </a>
+                              </>
+                            ) : null}
+
+                            <label
+                              className="btn btn-xs btn-ghost"
+                              style={{
+                                cursor: isBusy ? 'wait' : 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '3px',
+                                fontSize: '.72rem',
+                                padding: '3px 7px',
+                                color: 'var(--text-muted)'
+                              }}
+                              title="Upload or replace file on behalf of intern"
+                            >
+                              {isBusy ? <RefreshCw size={12} className="spin" /> : <Upload size={12} />}
+                              <span>{docInfo.uploaded ? 'Replace' : 'Upload'}</span>
+                              <input
+                                type="file"
+                                disabled={isBusy}
+                                accept={doc.key === 'photo' ? 'image/*' : '.pdf,.doc,.docx,.png,.jpg,.jpeg'}
+                                style={{ display: 'none' }}
+                                onChange={(e) => handleAdminUploadDoc(doc.key, internUserId, e)}
+                              />
+                            </label>
                           </div>
                         </div>
                       );
                     })}
                   </div>
 
-                  <div className="form-row" style={{ marginTop: '.75rem' }}>
+                  <div className="form-row" style={{ marginTop: '1rem' }}>
                     <div className="form-group" style={{ flex: 1 }}>
                       <label>Orientation Date</label>
                       <input
