@@ -2,6 +2,13 @@
    IED India IMS — Main CSS
    Design System: Warm Cream + Orange (IED Interns)
    ═══════════════════════════════════════════════════════════ */
+@font-face {
+  font-family: 'Alex Brush';
+  src: url('/fonts/AlexBrush-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
   /* Color Palette — IED Interns warm theme */

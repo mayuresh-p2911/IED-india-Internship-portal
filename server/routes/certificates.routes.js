@@ -4,7 +4,8 @@ const { protect } = require('../middleware/auth.middleware');
 const { authorize } = require('../middleware/role.middleware');
 
 router.get('/', protect, getCertificates);
-router.post('/generate', protect, authorize('admin', 'hr'), generateCertificate);
+// Allow interns, HR, and admins to generate certificates
+router.post('/generate', protect, authorize('admin', 'hr', 'superadmin', 'intern'), generateCertificate);
 router.get('/verify/:certNo', verifyCertificate);
 router.get('/:id/download', protect, downloadCertificate);
 
