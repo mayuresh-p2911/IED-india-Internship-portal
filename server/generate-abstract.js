@@ -302,15 +302,15 @@ drawSubHeading('4.1 Software Requirements Stack');
 function drawReqTable(headers, rows, startY) {
   doc.save();
   let currentY = startY || doc.y;
-  const rowH = 16;
-  const colWidths = [115, 145, 245.28];
+  const rowH = 17;
+  const colWidths = [115, 160, 230.28];
 
   // Header
   doc.rect(ML, currentY, CW, rowH).fill(C.navyDark);
   doc.fontSize(7.5).font('Helvetica-Bold').fillColor(C.white);
-  doc.text(headers[0], ML + 6, currentY + 4.5, { width: colWidths[0] - 6, lineBreak: false });
-  doc.text(headers[1], ML + colWidths[0] + 6, currentY + 4.5, { width: colWidths[1] - 6, lineBreak: false });
-  doc.text(headers[2], ML + colWidths[0] + colWidths[1] + 6, currentY + 4.5, { width: colWidths[2] - 6, lineBreak: false });
+  doc.text(headers[0], ML + 6, currentY + 5, { width: colWidths[0] - 6, lineBreak: false });
+  doc.text(headers[1], ML + colWidths[0] + 6, currentY + 5, { width: colWidths[1] - 6, lineBreak: false });
+  doc.text(headers[2], ML + colWidths[0] + colWidths[1] + 6, currentY + 5, { width: colWidths[2] - 6, lineBreak: false });
 
   currentY += rowH;
 
@@ -413,9 +413,9 @@ function drawVectorArrow(x1, y1, x2, y2, label, labelAbove = true) {
 
   if (label) {
     const midX = (x1 + x2) / 2;
-    const midY = (y1 + y2) / 2 + (labelAbove ? -8 : 3);
+    const midY = (y1 + y2) / 2 + (labelAbove ? -9.5 : 3.5);
     doc.fontSize(6.5).font('Helvetica-Bold').fillColor(C.navyBlue)
-       .text(label, midX - 60, midY, { width: 120, align: 'center', lineBreak: false });
+       .text(label, midX - 65, midY, { width: 130, align: 'center', lineBreak: false });
   }
 }
 
@@ -455,14 +455,14 @@ doc.roundedRect(ML, dfd1Y, CW, dfd1H, 5).fill(C.bgTint);
 doc.roundedRect(ML, dfd1Y, CW, dfd1H, 5).lineWidth(0.8).stroke(C.borderLight);
 
 function drawProcessBubble(x, y, num, name) {
-  const pr = 20;
+  const pr = 22;
   doc.circle(x, y, pr).fill(C.white);
   doc.circle(x, y, pr).lineWidth(1.2).stroke(C.royalBlue);
   doc.moveTo(x - pr, y - 5).lineTo(x + pr, y - 5).lineWidth(0.5).stroke(C.borderLight);
   doc.fontSize(7).font('Helvetica-Bold').fillColor(C.accentOrange)
      .text(num, x - pr, y - 14, { width: pr * 2, align: 'center', lineBreak: false });
   doc.fontSize(6.5).font('Helvetica-Bold').fillColor(C.navyDark)
-     .text(name, x - pr + 2, y - 2, { width: pr * 2 - 4, align: 'center', lineGap: 1 });
+     .text(name, x - pr + 1, y - 2, { width: pr * 2 - 2, align: 'center', lineGap: 1 });
 }
 
 function drawDataStore(x, y, w, h, id, name) {
@@ -475,9 +475,17 @@ function drawDataStore(x, y, w, h, id, name) {
      .text(name, x + 24, y + 4, { width: w - 28, lineBreak: false });
 }
 
+function drawTinyArrow(x1, y1, x2, y2, color = C.royalBlue) {
+  doc.moveTo(x1, y1).lineTo(x2, y2).lineWidth(0.8).stroke(color);
+  const headlen = 3.5;
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  doc.moveTo(x2, y2).lineTo(x2 - headlen * Math.cos(angle - Math.PI / 6), y2 - headlen * Math.sin(angle - Math.PI / 6)).stroke(color);
+  doc.moveTo(x2, y2).lineTo(x2 - headlen * Math.cos(angle + Math.PI / 6), y2 - headlen * Math.sin(angle + Math.PI / 6)).stroke(color);
+}
+
 // Row 1: Top Sub-Processes
 drawProcessBubble(ML + 50,  dfd1Y + 34, '1.0', 'User\nAuth');
-drawProcessBubble(ML + 150, dfd1Y + 34, '2.0', 'KYC\nOnboarding');
+drawProcessBubble(ML + 150, dfd1Y + 34, '2.0', 'KYC\nVerify');
 drawProcessBubble(ML + 250, dfd1Y + 34, '3.0', 'Timesheet\nTracking');
 drawProcessBubble(ML + 350, dfd1Y + 34, '4.0', 'Task\nManager');
 drawProcessBubble(ML + 445, dfd1Y + 34, '5.0', 'Evaluation\n& Grading');
@@ -493,10 +501,23 @@ drawDataStore(ML + 15,  dsY2, 135, 18, 'D4', 'Tasks & Submissions DB');
 drawDataStore(ML + 185, dsY2, 135, 18, 'D5', 'Evaluations DB');
 drawDataStore(ML + 355, dsY2, 135, 18, 'D6', 'Certificates Archive DB');
 
+// Connecting vector lines from Row 1 processes to Data Stores
+drawTinyArrow(ML + 50, dfd1Y + 56, ML + 50, dsY1); // 1.0 -> D1
+drawTinyArrow(ML + 150, dfd1Y + 56, ML + 215, dsY1); // 2.0 -> D2
+drawTinyArrow(ML + 250, dfd1Y + 56, ML + 380, dsY1); // 3.0 -> D3
+drawTinyArrow(ML + 350, dfd1Y + 56, ML + 80, dsY2); // 4.0 -> D4
+drawTinyArrow(ML + 445, dfd1Y + 56, ML + 250, dsY2); // 5.0 -> D5
+
 // Row 2: Bottom Sub-Processes
 drawProcessBubble(ML + 115, dfd1Y + 188, '6.0', 'Certificate\nEngine');
 drawProcessBubble(ML + 250, dfd1Y + 188, '7.0', 'QR\nVerification');
 drawProcessBubble(ML + 385, dfd1Y + 188, '8.0', 'Executive\nAnalytics');
+
+// Connecting vector lines from Data Stores to Row 2 processes
+drawTinyArrow(ML + 250, dsY2 + 18, ML + 115, dfd1Y + 166); // D5 -> 6.0
+drawTinyArrow(ML + 115, dfd1Y + 210, ML + 355, dsY2 + 18); // 6.0 -> D6
+drawTinyArrow(ML + 250, dfd1Y + 166, ML + 410, dsY2 + 18); // 7.0 <-> D6
+drawTinyArrow(ML + 385, dfd1Y + 166, ML + 385, dsY2 + 18); // 8.0 <- Data Stores
 
 // Data Flow Annotations
 doc.fontSize(6.8).font('Helvetica').fillColor(C.textSecondary);
@@ -604,7 +625,7 @@ drawParagraph(
 );
 
 // SECTION 8: FUTURE
-drawSectionHeading(8, 'Future (Future Scope & Enhancements)');
+drawSectionHeading(8, 'Future Scope');
 
 const futureItems = [
   {
