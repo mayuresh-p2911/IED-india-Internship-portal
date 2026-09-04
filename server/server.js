@@ -70,6 +70,22 @@ app.get('/uploads/*', async (req, res) => {
 
 app.use(express.static(path.join(__dirname, '../client/dist')));
 
+// Middleware: Ensure database is connected before handling /api and /uploads requests
+app.use(async (req, res, next) => {
+  if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+    try {
+      await connectDB();
+    } catch (dbErr) {
+      console.error('[ERROR] Database connection failed for request:', req.path, dbErr.message);
+      return res.status(503).json({
+        success: false,
+        message: `Database connection error: ${dbErr.message}. Please verify MongoDB Atlas Network Access allows 0.0.0.0/0.`
+      });
+    }
+  }
+  next();
+});
+
 // API Routes
 app.use('/api/auth',          require('./routes/auth.routes'));
 app.use('/api/users',         require('./routes/users.routes'));
