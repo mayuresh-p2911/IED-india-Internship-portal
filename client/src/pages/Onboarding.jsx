@@ -277,13 +277,13 @@ export function Onboarding() {
           <div className="glass-card" style={{ flex: 1, padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <div style={{ position: 'relative', width: '140px', height: '140px', marginBottom: '1.5rem' }}>
               <svg width="140" height="140" viewBox="0 0 140 140" style={{ transform: 'rotate(-90deg)' }}>
-                <circle cx="70" cy="70" r="60" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="12" />
+                <circle cx="70" cy="70" r="60" fill="none" stroke="var(--border-color)" strokeWidth="12" />
                 <circle
                   cx="70"
                   cy="70"
                   r="60"
                   fill="none"
-                  stroke={pct === 100 ? '#00e676' : '#4f8ef7'}
+                  stroke={pct === 100 ? '#00e676' : '#ff4f00'}
                   strokeWidth="12"
                   strokeDasharray={circumference}
                   strokeDashoffset={offset}
@@ -306,7 +306,7 @@ export function Onboarding() {
                 }}
               >
                 <div style={{ fontSize: '.7rem', color: 'var(--text-muted)', marginBottom: '.2rem' }}>Your Intern ID</div>
-                <div style={{ fontSize: '1.2rem', fontWeight: '700', color: '#4f8ef7', letterSpacing: '.1em' }}>
+                <div style={{ fontSize: '1.2rem', fontWeight: '700', color: '#ff4f00', letterSpacing: '.1em' }}>
                   {internRecord.internshipId || internRecord.internId?.internshipId}
                 </div>
               </div>
@@ -328,9 +328,9 @@ export function Onboarding() {
                       alignItems: 'center',
                       gap: '.75rem',
                       padding: '.75rem',
-                      background: 'rgba(255,255,255,0.03)',
+                      background: 'var(--bg-primary)',
                       borderRadius: '8px',
-                      borderLeft: `3px solid ${isDone ? '#00e676' : 'rgba(255,255,255,0.1)'}`
+                      borderLeft: `3px solid ${isDone ? '#00e676' : 'var(--border-color)'}`
                     }}
                   >
                     <div style={{ color: isDone ? '#00e676' : 'var(--text-muted)' }}>
@@ -366,8 +366,8 @@ export function Onboarding() {
                   key={item.key}
                   style={{
                     padding: '1.25rem',
-                    background: docInfo.uploaded ? 'rgba(0,230,118,0.04)' : 'rgba(255,255,255,0.04)',
-                    border: `1px solid ${docInfo.uploaded ? 'rgba(0,230,118,0.25)' : 'rgba(255,255,255,0.08)'}`,
+                    background: docInfo.uploaded ? 'rgba(0,230,118,0.04)' : 'var(--bg-primary)',
+                    border: `1px solid ${docInfo.uploaded ? 'rgba(0,230,118,0.25)' : 'var(--border-color)'}`,
                     borderRadius: '10px',
                     textAlign: 'center',
                     display: 'flex',
@@ -386,7 +386,7 @@ export function Onboarding() {
                         borderRadius: '8px',
                         objectFit: 'cover',
                         marginBottom: '.5rem',
-                        border: '1px solid rgba(255,255,255,0.1)'
+                        border: '1px solid var(--border-color)'
                       }}
                     />
                   ) : (
@@ -527,7 +527,7 @@ export function Onboarding() {
                   </div>
 
                   {/* Uploaded Documents Section */}
-                  <div style={{ marginTop: '.75rem', paddingTop: '.75rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div style={{ marginTop: '.75rem', paddingTop: '.75rem', borderTop: '1px solid var(--border-color)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '.5rem' }}>
                       <span style={{ fontSize: '.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>Uploaded Documents</span>
                       <span
@@ -553,8 +553,8 @@ export function Onboarding() {
                               justifyContent: 'space-between',
                               padding: '.4rem .55rem',
                               borderRadius: '6px',
-                              background: doc.uploaded ? 'rgba(0,230,118,0.08)' : 'rgba(255,255,255,0.03)',
-                              border: `1px solid ${doc.uploaded ? 'rgba(0,230,118,0.25)' : 'rgba(255,255,255,0.06)'}`,
+                              background: doc.uploaded ? 'rgba(0,230,118,0.08)' : 'var(--bg-primary)',
+                              border: `1px solid ${doc.uploaded ? 'rgba(0,230,118,0.25)' : 'var(--border-color)'}`,
                               fontSize: '.72rem'
                             }}
                           >
@@ -642,7 +642,8 @@ export function Onboarding() {
                             alignItems: 'center',
                             justifyContent: 'space-between',
                             padding: '.6rem 1rem',
-                            background: 'rgba(255,255,255,0.04)',
+                            background: 'var(--bg-primary)',
+                            border: '1px solid var(--border-color)',
                             borderRadius: '8px',
                             cursor: 'pointer'
                           }}
@@ -669,7 +670,7 @@ export function Onboarding() {
                                 position: 'absolute',
                                 inset: 0,
                                 borderRadius: '11px',
-                                background: isChecked ? '#00e676' : 'rgba(255,255,255,0.12)',
+                                background: isChecked ? '#00e676' : 'rgba(0,0,0,0.15)',
                                 transition: 'background .2s'
                               }}
                             ></div>
@@ -682,7 +683,8 @@ export function Onboarding() {
                                 height: '18px',
                                 borderRadius: '50%',
                                 background: '#fff',
-                                transition: 'left .2s'
+                                transition: 'left .2s',
+                                boxShadow: isChecked ? 'none' : '0 1px 3px rgba(0,0,0,0.3)'
                               }}
                             ></div>
                           </div>
@@ -703,8 +705,8 @@ export function Onboarding() {
                         <div
                           style={{
                             padding: '.75rem',
-                            background: docInfo.uploaded ? 'rgba(0,230,118,0.05)' : 'rgba(255,255,255,0.03)',
-                            border: `1px solid ${docInfo.uploaded ? 'rgba(0,230,118,0.25)' : 'rgba(255,255,255,0.08)'}`,
+                            background: docInfo.uploaded ? 'rgba(0,230,118,0.05)' : 'var(--bg-primary)',
+                            border: `1px solid ${docInfo.uploaded ? 'rgba(0,230,118,0.3)' : 'var(--border-color)'}`,
                             borderRadius: '8px',
                             display: 'flex',
                             flexDirection: 'column',
