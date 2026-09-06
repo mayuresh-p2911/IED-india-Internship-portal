@@ -621,8 +621,8 @@ export function Onboarding() {
                 <X size={18} />
               </button>
             </div>
-            <form onSubmit={handleSaveChecklist}>
-              <div className="modal-body">
+            <form onSubmit={handleSaveChecklist} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+              <div className="modal-body" style={{ flex: 1, overflowY: 'auto' }}>
                 <div className="form-section">
                   <h4 style={{ color: 'var(--text-primary)', marginBottom: '.75rem' }}>Checklist Items</h4>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '.6rem' }}>
