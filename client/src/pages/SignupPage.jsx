@@ -50,8 +50,12 @@ export function SignupPage({ onSignupSuccess, onGoToLogin, onGoToHome }) {
         <div className="lb-body">
           <h2>Start your internship journey today.</h2>
           <p>
-            Create your account and unlock structured internship tracking, mentor collaboration,
-            and verifiable certificates — all in one place.
+            <strong>About IED India:</strong> We are a unified ecosystem empowering you to build skills through expert-led courses,
+            sell products in a trusted marketplace, and earn rewards through referrals.
+          </p>
+          <p style={{ marginTop: '12px' }}>
+            Create your account to unlock structured internship tracking, mentor collaboration,
+            and verifiable certificates — all in one seamless platform.
           </p>
           <div className="lb-stats">
             <div className="lb-stat">
