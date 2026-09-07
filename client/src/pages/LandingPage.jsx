@@ -98,14 +98,19 @@ export function LandingPage({ onGoToLogin }) {
 
       <section className="lp-section" id="lp-pricing">
         <div className="lp-cta-band">
-          <h2>Free for educational programs</h2>
-          <p>
-            No per-seat fees, no setup cost. Bring your whole cohort and start managing
-            internships today.
-          </p>
-          <button className="lp-btn" id="landing-cta-band" onClick={onGoToLogin}>
-            Get started — it's free
-          </button>
+          <div className="lp-decor-orb-1"></div>
+          <div className="lp-decor-orb-2"></div>
+
+          <div className="content-relative">
+            <h2>Free for educational programs</h2>
+            <p>
+              No per-seat fees, no setup cost. Bring your whole cohort and start managing
+              internships today.
+            </p>
+            <button className="lp-btn" id="landing-cta-band" onClick={onGoToLogin}>
+              Get started — it's free <span>→</span>
+            </button>
+          </div>
         </div>
       </section>
 
