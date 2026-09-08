@@ -50,8 +50,7 @@ export function SignupPage({ onSignupSuccess, onGoToLogin, onGoToHome }) {
         <div className="lb-body">
           <h2>Start your internship journey today.</h2>
           <p>
-            <strong>About IED India:</strong> We are a unified ecosystem empowering you to build skills through expert-led courses,
-            sell products in a trusted marketplace, and earn rewards through referrals.
+            <strong>About IED India:</strong> International Entrepreneur Digital India Pvt Ltd is a unified digital ecosystem designed to support skill development, entrepreneurship, and income generation. We empower you to build real-world skills through 500+ expert-led courses, sell products in our trusted marketplace, and earn through our affiliate network.
           </p>
           <p style={{ marginTop: '12px' }}>
             Create your account to unlock structured internship tracking, mentor collaboration,

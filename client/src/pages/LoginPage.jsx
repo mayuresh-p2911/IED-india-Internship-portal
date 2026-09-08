@@ -62,8 +62,7 @@ export function LoginPage({ onLoginSuccess, onGoToSignup, onGoToApply, onGoToHom
         <div className="lb-body">
           <h2>One workspace for the whole internship journey.</h2>
           <p>
-            <strong>About IED India:</strong> We are a unified ecosystem empowering you to build skills through expert-led courses,
-            sell products in a trusted marketplace, and earn rewards through referrals.
+            <strong>About IED India:</strong> International Entrepreneur Digital India Pvt Ltd is a unified digital ecosystem designed to support skill development, entrepreneurship, and income generation. We empower you to build real-world skills through 500+ expert-led courses, sell products in our trusted marketplace, and earn through our affiliate network.
           </p>
           <p style={{ marginTop: '12px' }}>
             This portal lets admins manage interns, attendance, tasks, and certificates. Interns track their work,
