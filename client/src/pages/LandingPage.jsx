@@ -135,7 +135,7 @@ export function LandingPage({ onGoToLogin }) {
             <div className="bento-bg-glow glow-2"></div>
           </div>
 
-          <div className="lp-bento-card">
+          <div className="lp-bento-card bento-full">
             <div className="lp-bento-ico">
               <Award size={28} />
             </div>
