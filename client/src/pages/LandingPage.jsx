@@ -57,22 +57,35 @@ export function LandingPage({ onGoToLogin }) {
         <div className="lp-about-grid">
           <div className="lp-about-content">
             <div className="lp-eyebrow">About IED India</div>
-            <h2>Learn Skills. Sell Products.<br />Earn Rewards.</h2>
-            <p className="lp-lead" style={{ marginBottom: '24px' }}>
+            <h2 className="lp-hero-title-clean">
+              Learn Skills. Sell Products. <span className="highlight-gradient">Earn Rewards.</span>
+            </h2>
+            <p className="lp-lead" style={{ marginBottom: '32px' }}>
               IED India is a unified ecosystem designed for growth. Beyond internships, we provide a complete platform to build skills through expert-led courses, sell products in a trusted marketplace, and earn rewards through our referral network.
             </p>
             <ul className="lp-check-list">
-              <li><BookOpen size={20} className="text-info" /> <span><b>Build Skills:</b> Master in-demand skills with our expert-led courses.</span></li>
-              <li><ShoppingBag size={20} className="text-info" /> <span><b>Trusted Marketplace:</b> Sell and buy innovative products seamlessly.</span></li>
-              <li><TrendingUp size={20} className="text-info" /> <span><b>Earn Rewards:</b> Grow your income through our robust referral network.</span></li>
+              <li>
+                <div className="lp-icon-box"><BookOpen size={20} className="text-info" /></div>
+                <span><b>Build Skills:</b> Master in-demand skills with our expert-led courses.</span>
+              </li>
+              <li>
+                <div className="lp-icon-box"><ShoppingBag size={20} className="text-info" /></div>
+                <span><b>Trusted Marketplace:</b> Sell and buy innovative products seamlessly.</span>
+              </li>
+              <li>
+                <div className="lp-icon-box"><TrendingUp size={20} className="text-info" /></div>
+                <span><b>Earn Rewards:</b> Grow your income through our robust referral network.</span>
+              </li>
             </ul>
-            <a href="https://www.iedindiaofficial.com/" target="_blank" rel="noreferrer" className="lp-btn-outline" style={{ marginTop: '32px', display: 'inline-flex' }}>
+            <a href="https://www.iedindiaofficial.com/" target="_blank" rel="noreferrer" className="lp-btn-outline" style={{ marginTop: '36px' }}>
               Explore IED India <ArrowRight size={18} />
             </a>
           </div>
           <div className="lp-about-visual">
             <div className="glass-card about-card-main">
-              <Globe size={48} className="text-info" style={{ marginBottom: '16px' }} />
+              <div className="lp-icon-box-large">
+                <Globe size={40} className="text-info" />
+              </div>
               <h3>Join Our Ecosystem</h3>
               <p>Thousands of learners, sellers, and earners are already building their future with us today.</p>
               <div className="about-stats">
