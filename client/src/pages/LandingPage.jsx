@@ -98,13 +98,18 @@ export function LandingPage({ onGoToLogin }) {
         </div>
       </section>
 
-      <section className="lp-section" id="lp-product" style={{ paddingTop: '60px' }}>
-        <div style={{ textAlign: 'center', maxWidth: '620px', margin: '0 auto' }}>
-          <div className="lp-eyebrow">Internship Platform</div>
-          <h2>Everything the program needs, in one place</h2>
-          <p className="lp-lead">
-            Stop juggling spreadsheets, email threads, and chat groups. IED Interns brings the
-            entire lifecycle together in a warm, intuitive workspace.
+      <section className="lp-section" id="lp-product" style={{ paddingTop: '60px', position: 'relative' }}>
+        <div className="product-glow"></div>
+        <div style={{ textAlign: 'center', maxWidth: '720px', margin: '0 auto', position: 'relative', zIndex: 2 }}>
+          <div className="lp-eyebrow-premium">
+            <span className="eyebrow-dot"></span> INTERNSHIP PLATFORM
+          </div>
+          <h2 className="lp-section-title-premium">
+            Everything your program needs, <br />
+            <span className="highlight-gradient">in one seamless workspace.</span>
+          </h2>
+          <p className="lp-lead-premium">
+            Stop juggling spreadsheets, endless email threads, and scattered chat groups. IED Interns brings the entire lifecycle together in a warm, intuitive, and remarkably fast platform.
           </p>
         </div>
 
@@ -151,18 +156,18 @@ export function LandingPage({ onGoToLogin }) {
       </section>
 
       <section className="lp-section" id="lp-pricing">
-        <div className="lp-cta-band">
-          <div className="lp-decor-orb-1"></div>
-          <div className="lp-decor-orb-2"></div>
+        <div className="lp-cta-band-ultimate">
+          <div className="cta-light-leak top-left"></div>
+          <div className="cta-light-leak bottom-right"></div>
+          <div className="cta-noise-overlay"></div>
 
-          <div className="content-relative">
-            <h2>Free for educational programs</h2>
-            <p>
-              No per-seat fees, no setup cost. Bring your whole cohort and start managing
-              internships today.
+          <div className="cta-content-wrapper">
+            <h2 className="cta-hero-text">Free for educational programs</h2>
+            <p className="cta-sub-text">
+              No per-seat fees, no setup cost. Bring your whole cohort and start managing internships today.
             </p>
-            <button className="lp-btn" id="landing-cta-band" onClick={onGoToLogin}>
-              Get started — it's free <span>→</span>
+            <button className="cta-action-btn" onClick={onGoToLogin}>
+              Get started — it's free
             </button>
           </div>
         </div>
