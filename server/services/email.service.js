@@ -185,12 +185,20 @@ const _esc = (str = '') => String(str)
 // ── Email Templates ─────────────────────────────────────────
 const emailService = {
 
-  sendApplicationReceived: (email, name) => sendMail(email,
+  sendApplicationReceived: (email, name, payment = null) => sendMail(email,
     'Application Received - IED India',
     _wrap(`
       <h2 style="color:#022654;margin-top:0">Application Received!</h2>
-      <p style="color:#475569">Dear <strong>${name}</strong>,</p>
+      <p style="color:#475569">Dear <strong>${_esc(name)}</strong>,</p>
       <p style="color:#475569;line-height:1.7">Thank you for applying to intern at <strong>IED India Pvt Ltd</strong>. We have received your application and our HR team will review it shortly.</p>
+      ${payment && payment.paymentId ? `
+      <div style="background:#f0fdf4;border-left:4px solid #10b981;border-radius:8px;padding:16px;margin:20px 0">
+        <table style="width:100%;border-collapse:collapse">
+          <tr><td style="padding:4px 0;color:#64748b;font-size:13px;width:140px">Application Fee</td><td style="padding:4px 0;color:#0f172a;font-weight:700">₹${payment.amount || 99} (Paid)</td></tr>
+          <tr><td style="padding:4px 0;color:#64748b;font-size:13px">Payment ID</td><td style="padding:4px 0;color:#0f172a;font-weight:600;font-family:monospace">${_esc(payment.paymentId)}</td></tr>
+          ${payment.orderId ? `<tr><td style="padding:4px 0;color:#64748b;font-size:13px">Order ID</td><td style="padding:4px 0;color:#0f172a;font-family:monospace">${_esc(payment.orderId)}</td></tr>` : ''}
+        </table>
+      </div>` : ''}
       <p style="color:#94a3b8;font-size:13px;margin-top:24px">Warm regards,<br><strong>IED India HR Team</strong></p>
     `)),
 

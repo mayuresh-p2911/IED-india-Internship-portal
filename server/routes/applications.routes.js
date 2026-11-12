@@ -2,7 +2,7 @@ const router = require('express').Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { getApplications, getApplication, submitApplication, updateStatus, deleteApplication } = require('../controllers/applications.controller');
+const { getApplications, getApplication, getPaymentConfig, createApplicationOrder, submitApplication, updateStatus, deleteApplication } = require('../controllers/applications.controller');
 const { protect } = require('../middleware/auth.middleware');
 const { authorize } = require('../middleware/role.middleware');
 const { persistUploads } = require('../middleware/upload.middleware');
@@ -35,6 +35,8 @@ const setFilenames = (req, res, next) => {
 };
 
 router.get('/', protect, authorize('admin', 'hr', 'mentor'), getApplications);
+router.get('/payment-config', getPaymentConfig);
+router.post('/create-order', createApplicationOrder);
 router.post('/', upload.fields([{ name: 'resume', maxCount: 1 }, { name: 'photo', maxCount: 1 }]), setFilenames, persistUploads, submitApplication);
 router.get('/:id', protect, getApplication);
 router.patch('/:id/status', protect, authorize('admin', 'hr'), updateStatus);

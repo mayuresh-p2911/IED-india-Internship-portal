@@ -2,6 +2,7 @@ const Application = require('../models/Application');
 const User = require('../models/User');
 const Onboarding = require('../models/Onboarding');
 const emailService = require('../services/email.service');
+const razorpayService = require('../services/razorpay.service');
 
 const normalizeAppPaths = (app) => {
   if (!app) return app;
@@ -66,17 +67,115 @@ const getApplication = async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };
 
-// @desc  Submit new application (public)
+// @desc  Get public Razorpay payment configuration for internship applications
+// @route GET /api/applications/payment-config
+const getPaymentConfig = async (req, res) => {
+  const cfg = razorpayService.getConfig();
+  res.json({
+    success: true,
+    enabled: cfg.isConfigured,
+    keyId: cfg.isConfigured ? cfg.keyId : '',
+    amountInr: cfg.feeInr,
+    currency: cfg.currency
+  });
+};
+
+// @desc  Create Razorpay order prior to application submission
+// @route POST /api/applications/create-order
+const createApplicationOrder = async (req, res) => {
+  try {
+    const cfg = razorpayService.getConfig();
+    if (!cfg.isConfigured) {
+      return res.status(503).json({ success: false, message: 'Payment gateway is not configured.' });
+    }
+
+    const { name, email, phone, department } = req.body;
+    if (!name || !email || !phone) {
+      return res.status(400).json({ success: false, message: 'Name, email, and phone are required before initiating payment.' });
+    }
+
+    const order = await razorpayService.createOrder({
+      receipt: `ied_app_${Date.now()}`,
+      notes: {
+        applicantName: String(name).trim().slice(0, 80),
+        applicantEmail: String(email).trim().toLowerCase().slice(0, 80),
+        department: String(department || '').trim().slice(0, 80)
+      }
+    });
+
+    res.json({ success: true, ...order });
+  } catch (err) {
+    console.error('[ERROR] createApplicationOrder:', err.message);
+    res.status(500).json({ success: false, message: err.message || 'Failed to create payment order.' });
+  }
+};
+
+// @desc  Submit new application (public, with Razorpay payment verification)
 // @route POST /api/applications
 const submitApplication = async (req, res) => {
   try {
-    const data = { ...req.body };
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      ...restBody
+    } = req.body;
+
+    const cfg = razorpayService.getConfig();
+    let paymentData;
+
+    if (cfg.isConfigured) {
+      const orderId = (razorpay_order_id || '').trim();
+      const paymentId = (razorpay_payment_id || '').trim();
+      const signature = (razorpay_signature || '').trim();
+
+      if (!orderId || !paymentId || !signature) {
+        return res.status(400).json({
+          success: false,
+          message: 'Application fee payment is required before submitting.'
+        });
+      }
+
+      const isValid = razorpayService.verifySignature({ orderId, paymentId, signature });
+      if (!isValid) {
+        return res.status(400).json({
+          success: false,
+          message: 'Payment verification failed. Invalid Razorpay signature.'
+        });
+      }
+
+      const existingPayment = await Application.findOne({ 'payment.paymentId': paymentId }).select('_id');
+      if (existingPayment) {
+        return res.status(409).json({
+          success: false,
+          message: 'This payment has already been used for an application.'
+        });
+      }
+
+      paymentData = {
+        orderId,
+        paymentId,
+        signature,
+        amount: cfg.feeInr,
+        currency: cfg.currency,
+        status: 'paid',
+        paidAt: new Date()
+      };
+    }
+
+    const data = { ...restBody };
+    if (paymentData) data.payment = paymentData;
+
     if (req.files) {
       if (req.files.resume) data.resume = `/uploads/applications/${req.files.resume[0].filename}`;
       if (req.files.photo) data.photo = `/uploads/applications/${req.files.photo[0].filename}`;
     }
     const application = await Application.create(data);
-    const emailResult = await emailService.sendApplicationReceived(application.email, application.name);
+    const emailResult = await emailService.sendApplicationReceived(
+      application.email,
+      application.name,
+      application.payment
+    );
     res.status(201).json({
       success: true,
       message: 'Application submitted successfully!',
@@ -192,4 +291,4 @@ const deleteApplication = async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };
 
-module.exports = { getApplications, getApplication, submitApplication, updateStatus, deleteApplication };
+module.exports = { getApplications, getApplication, getPaymentConfig, createApplicationOrder, submitApplication, updateStatus, deleteApplication };

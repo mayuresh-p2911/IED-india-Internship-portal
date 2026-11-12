@@ -466,6 +466,22 @@ export function Applications() {
                         <div>{selectedApp.createdAt ? new Date(selectedApp.createdAt).toLocaleString('en-IN') : '—'}</div>
                       </div>
                     </div>
+                    {selectedApp.payment?.paymentId && (
+                      <div className="form-row">
+                        <div>
+                          <div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>Application Fee</div>
+                          <div>
+                            <span className="status-badge status-selected">
+                              Paid ₹{selectedApp.payment.amount || 99}
+                            </span>
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>Razorpay Payment ID</div>
+                          <div style={{ fontFamily: 'monospace', fontSize: '0.82rem' }}>{selectedApp.payment.paymentId}</div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div style={{ textAlign: 'center', flexShrink: 0 }}>
                     <div style={{ fontSize: '.75rem', color: 'var(--text-muted)', marginBottom: '.4rem' }}>Photo</div>
