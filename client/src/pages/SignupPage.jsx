@@ -50,8 +50,11 @@ export function SignupPage({ onSignupSuccess, onGoToLogin, onGoToHome }) {
         <div className="lb-body">
           <h2>Start your internship journey today.</h2>
           <p>
-            Create your account and unlock structured internship tracking, mentor collaboration,
-            and verifiable certificates — all in one place.
+            <strong>About IED India:</strong> International Entrepreneur Digital India Pvt Ltd is a unified digital ecosystem designed to support skill development, entrepreneurship, and income generation. We empower you to build real-world skills through 500+ expert-led courses, sell products in our trusted marketplace, and earn through our affiliate network.
+          </p>
+          <p style={{ marginTop: '12px' }}>
+            Create your account to unlock structured internship tracking, mentor collaboration,
+            and verifiable certificates — all in one seamless platform.
           </p>
           <div className="lb-stats">
             <div className="lb-stat">
@@ -78,12 +81,12 @@ export function SignupPage({ onSignupSuccess, onGoToLogin, onGoToHome }) {
       {/* form panel */}
       <div className="login-container">
         <div className="login-card">
-          <div className="login-back" id="signup-back-home" onClick={onGoToHome}>
+          <div className="login-back" id="signup-back-home" onClick={onGoToHome} style={{ marginBottom: '16px' }}>
             <ChevronLeft size={16} /> Back to home
           </div>
           <h2>Create account</h2>
-          <p className="login-subtitle">Join the IED Interns portal</p>
-          <form id="signup-form" className="login-form" onSubmit={handleSubmit}>
+          <p className="login-subtitle" style={{ marginBottom: '16px' }}>Join the IED Interns portal</p>
+          <form id="signup-form" className="login-form signup-form-compact" onSubmit={handleSubmit}>
             <div className="form-group">
               <label htmlFor="signup-name">Full Name *</label>
               <div className="input-wrap">

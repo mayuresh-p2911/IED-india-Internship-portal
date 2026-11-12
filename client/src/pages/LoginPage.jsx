@@ -4,7 +4,7 @@ import { ChevronLeft, Mail, Lock, Eye, EyeOff, ArrowRight, Check } from 'lucide-
 
 export function LoginPage({ onLoginSuccess, onGoToSignup, onGoToApply, onGoToHome }) {
   const { login } = useAuth();
-  
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
@@ -62,7 +62,10 @@ export function LoginPage({ onLoginSuccess, onGoToSignup, onGoToApply, onGoToHom
         <div className="lb-body">
           <h2>One workspace for the whole internship journey.</h2>
           <p>
-            Admins manage interns, attendance, tasks, and certificates. Interns track their work,
+            <strong>About IED India:</strong> International Entrepreneur Digital India Pvt Ltd is a unified digital ecosystem designed to support skill development, entrepreneurship, and income generation. We empower you to build real-world skills through 500+ expert-led courses, sell products in our trusted marketplace, and earn through our affiliate network.
+          </p>
+          <p style={{ marginTop: '12px' }}>
+            This portal lets admins manage interns, attendance, tasks, and certificates. Interns track their work,
             leave, and progress — all in one place.
           </p>
           <div className="lb-stats">
