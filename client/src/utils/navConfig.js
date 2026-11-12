@@ -7,6 +7,7 @@ export const ROLE_NAV = {
     { section: 'Management', items: [
       { id: 'users',         icon: 'users',            label: 'User Management' },
       { id: 'applications',  icon: 'file-text',        label: 'Applications' },
+      { id: 'intern-referrals', icon: 'user-plus',     label: 'Intern Referrals' },
       { id: 'interviews',    icon: 'calendar',         label: 'Interviews' },
       { id: 'onboarding',    icon: 'clipboard-check',  label: 'Onboarding' },
     ]},
@@ -30,6 +31,7 @@ export const ROLE_NAV = {
     ]},
     { section: 'Recruitment', items: [
       { id: 'applications',  icon: 'file-text',        label: 'Applications' },
+      { id: 'intern-referrals', icon: 'user-plus',     label: 'Intern Referrals' },
       { id: 'interviews',    icon: 'calendar',         label: 'Interviews' },
       { id: 'onboarding',    icon: 'clipboard-check',  label: 'Onboarding' },
     ]},
@@ -71,12 +73,18 @@ export const ROLE_NAV = {
       { id: 'certificates',  icon: 'award',            label: 'Certificates' },
       { id: 'communication', icon: 'message-square',   label: 'Messages' },
     ]},
+    { section: 'Referrals', items: [
+      { id: 'refer-intern',  icon: 'user-plus',        label: 'Refer an Intern' },
+      { id: 'my-referrals',  icon: 'clipboard-list',   label: 'My Referrals' },
+    ]},
   ]
 };
 
 export const MODULE_TITLES = {
   dashboard: 'Dashboard', analytics: 'Analytics', users: 'User Management',
-  applications: 'Applications', interviews: 'Interviews', onboarding: 'Onboarding',
+  applications: 'Applications', 'intern-referrals': 'Intern Referrals',
+  'refer-intern': 'Refer an Intern', 'my-referrals': 'My Referrals',
+  interviews: 'Interviews', onboarding: 'Onboarding',
   attendance: 'Attendance', tasks: 'Tasks', leaves: 'Leave Management',
   communication: 'Messages', evaluation: 'Evaluations', certificates: 'Certificates',
 };

@@ -175,6 +175,13 @@ const _wrap = (content) => `
 const _btn = (text, url, color = '#03377A') =>
   `<div style="text-align:center;margin:24px 0"><a href="${url}" style="background:${color};color:#fff;text-decoration:none;padding:12px 28px;border-radius:30px;font-weight:600;font-size:14px;display:inline-block">${text}</a></div>`;
 
+const _esc = (str = '') => String(str)
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;');
+
 // ── Email Templates ─────────────────────────────────────────
 const emailService = {
 
@@ -290,6 +297,67 @@ const emailService = {
       </div>
       ${_btn('Open Portal', BASE)}
       <p style="color:#94a3b8;font-size:13px;margin-top:24px">Warm regards,<br><strong>IED India Team</strong></p>
+    `)),
+
+  sendReferralInvitation: (email, name, { referrerName, internshipPosition, referralId, message }) => sendMail(email,
+    `You Have Been Referred for an Internship at IED India (${internshipPosition})`,
+    _wrap(`
+      <h2 style="color:#022654;margin-top:0">Internship Referral Invitation!</h2>
+      <p style="color:#475569">Dear <strong>${_esc(name)}</strong>,</p>
+      <p style="color:#475569;line-height:1.7"><strong>${_esc(referrerName)}</strong> has referred you for the <strong>${_esc(internshipPosition)}</strong> opportunity at <strong>IED India Pvt Ltd</strong>.</p>
+      <div style="background:#f0f4f8;border-radius:10px;padding:20px;margin:20px 0">
+        <table style="width:100%;border-collapse:collapse">
+          <tr><td style="padding:8px 0;color:#94a3b8;font-size:13px;width:140px">Referral ID</td><td style="padding:8px 0;color:#0f172a;font-weight:700">${_esc(referralId)}</td></tr>
+          <tr><td style="padding:8px 0;color:#94a3b8;font-size:13px">Referred By</td><td style="padding:8px 0;color:#0f172a;font-weight:600">${_esc(referrerName)}</td></tr>
+          <tr><td style="padding:8px 0;color:#94a3b8;font-size:13px">Position</td><td style="padding:8px 0;color:#0f172a;font-weight:600">${_esc(internshipPosition)}</td></tr>
+          <tr><td style="padding:8px 0;color:#94a3b8;font-size:13px">Status</td><td style="padding:8px 0;color:#03377A;font-weight:700">Pending Review</td></tr>
+        </table>
+        ${message ? `<p style="margin:12px 0 0;color:#475569;font-size:13px;line-height:1.6"><strong>Message from ${_esc(referrerName)}:</strong> ${_esc(message)}</p>` : ''}
+      </div>
+      <p style="color:#475569;line-height:1.7">Register or log in to the IED India Internship Portal to get started and track your journey:</p>
+      ${_btn('Register / Login on Portal', BASE)}
+      <p style="color:#94a3b8;font-size:13px;margin-top:24px">Warm regards,<br><strong>IED India HR Team</strong></p>
+    `)),
+
+  sendReferralExistingUserNotification: (email, name, { referrerName, internshipPosition, referralId, message }) => sendMail(email,
+    `New Internship Referral Submitted for You (${referralId}) - IED India`,
+    _wrap(`
+      <h2 style="color:#022654;margin-top:0">You Have Been Referred!</h2>
+      <p style="color:#475569">Dear <strong>${_esc(name)}</strong>,</p>
+      <p style="color:#475569;line-height:1.7"><strong>${_esc(referrerName)}</strong> has referred you for the <strong>${_esc(internshipPosition)}</strong> position at <strong>IED India Pvt Ltd</strong>, and the referral has been linked to your existing portal account.</p>
+      <div style="background:#f0f4f8;border-radius:10px;padding:20px;margin:20px 0">
+        <table style="width:100%;border-collapse:collapse">
+          <tr><td style="padding:8px 0;color:#94a3b8;font-size:13px;width:140px">Referral ID</td><td style="padding:8px 0;color:#0f172a;font-weight:700">${_esc(referralId)}</td></tr>
+          <tr><td style="padding:8px 0;color:#94a3b8;font-size:13px">Referred By</td><td style="padding:8px 0;color:#0f172a;font-weight:600">${_esc(referrerName)}</td></tr>
+          <tr><td style="padding:8px 0;color:#94a3b8;font-size:13px">Position</td><td style="padding:8px 0;color:#0f172a;font-weight:600">${_esc(internshipPosition)}</td></tr>
+          <tr><td style="padding:8px 0;color:#94a3b8;font-size:13px">Status</td><td style="padding:8px 0;color:#03377A;font-weight:700">Pending Review</td></tr>
+        </table>
+        ${message ? `<p style="margin:12px 0 0;color:#475569;font-size:13px;line-height:1.6"><strong>Message from ${_esc(referrerName)}:</strong> ${_esc(message)}</p>` : ''}
+      </div>
+      ${_btn('Login to Portal', BASE)}
+      <p style="color:#94a3b8;font-size:13px;margin-top:24px">Warm regards,<br><strong>IED India HR Team</strong></p>
+    `)),
+
+  sendReferralStatusUpdate: (email, recipientName, { referralId, candidateName, internshipPosition, previousStatus, newStatus, remarks, isReferrer }) => sendMail(email,
+    `Referral Status Update (${referralId}): ${newStatus} - IED India`,
+    _wrap(`
+      <h2 style="color:#022654;margin-top:0">Referral Status Updated</h2>
+      <p style="color:#475569">Dear <strong>${_esc(recipientName)}</strong>,</p>
+      <p style="color:#475569;line-height:1.7">${isReferrer
+        ? `The referral you submitted for <strong>${_esc(candidateName)}</strong> has been updated.`
+        : `Your referral for <strong>${_esc(internshipPosition)}</strong> at <strong>IED India Pvt Ltd</strong> has a new status update.`}</p>
+      <div style="background:#f0f4f8;border-radius:10px;padding:20px;margin:20px 0">
+        <table style="width:100%;border-collapse:collapse">
+          <tr><td style="padding:8px 0;color:#94a3b8;font-size:13px;width:140px">Referral ID</td><td style="padding:8px 0;color:#0f172a;font-weight:700">${_esc(referralId)}</td></tr>
+          <tr><td style="padding:8px 0;color:#94a3b8;font-size:13px">Candidate</td><td style="padding:8px 0;color:#0f172a;font-weight:600">${_esc(candidateName)}</td></tr>
+          <tr><td style="padding:8px 0;color:#94a3b8;font-size:13px">Position</td><td style="padding:8px 0;color:#0f172a;font-weight:600">${_esc(internshipPosition)}</td></tr>
+          ${previousStatus ? `<tr><td style="padding:8px 0;color:#94a3b8;font-size:13px">Previous Status</td><td style="padding:8px 0;color:#64748b;font-weight:600">${_esc(previousStatus)}</td></tr>` : ''}
+          <tr><td style="padding:8px 0;color:#94a3b8;font-size:13px">New Status</td><td style="padding:8px 0;color:#03377A;font-weight:700">${_esc(newStatus)}</td></tr>
+        </table>
+        ${remarks ? `<div style="background:#ffffff;border-left:4px solid #03377A;border-radius:6px;padding:12px;margin-top:14px"><p style="margin:0;color:#334155;font-size:13px"><strong>Admin Remarks:</strong> ${_esc(remarks)}</p></div>` : ''}
+      </div>
+      ${_btn('View Portal', BASE)}
+      <p style="color:#94a3b8;font-size:13px;margin-top:24px">Warm regards,<br><strong>IED India HR Team</strong></p>
     `)),
 
   verifySMTP,

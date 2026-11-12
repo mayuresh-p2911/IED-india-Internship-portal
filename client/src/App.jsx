@@ -22,6 +22,9 @@ import Leaves from './pages/Leaves';
 import Communication from './pages/Communication';
 import Evaluation from './pages/Evaluation';
 import Certificates from './pages/Certificates';
+import ReferIntern from './pages/ReferIntern';
+import MyReferrals from './pages/MyReferrals';
+import InternReferrals from './pages/InternReferrals';
 
 // Styles
 import './tailwind.css';
@@ -213,6 +216,12 @@ function AppContent() {
         return <Evaluation />;
       case 'certificates':
         return <Certificates />;
+      case 'refer-intern':
+        return <ReferIntern onNavigate={setCurrentModule} />;
+      case 'my-referrals':
+        return <MyReferrals onNavigate={setCurrentModule} />;
+      case 'intern-referrals':
+        return <InternReferrals />;
       default:
         return <Dashboard onNavigate={setCurrentModule} />;
     }

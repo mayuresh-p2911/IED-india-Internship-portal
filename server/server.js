@@ -100,6 +100,7 @@ app.use('/api/evaluations',   require('./routes/evaluations.routes'));
 app.use('/api/certificates',  require('./routes/certificates.routes'));
 app.use('/api/leaves',        require('./routes/leaves.routes'));
 app.use('/api/analytics',     require('./routes/analytics.routes'));
+app.use('/api/referrals',     require('./routes/referrals.routes'));
 
 // Return JSON 404 for unhandled API routes
 app.all('/api/*', (req, res) => {
