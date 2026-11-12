@@ -124,9 +124,11 @@ export function Interviews() {
         ? { status: 'completed', result: 'pass', acceptIntern: true }
         : { status: 'completed', result: 'fail', rejectIntern: true, rejectionReason };
 
-      await API.put(`/interviews/${ivId}`, payload);
+      const res = await API.put(`/interviews/${ivId}`, payload);
 
-      if (accept) {
+      if (res?.emailError) {
+        showToast(`Interview updated, but email failed: ${res.emailError}`, 'error');
+      } else if (accept) {
         showToast('🎉 Intern accepted! Account created & credentials emailed.', 'success');
       } else {
         showToast('Rejection email sent to candidate.', 'info');
@@ -229,11 +231,19 @@ export function Interviews() {
 
     try {
       if (editingIv) {
-        await API.put(`/interviews/${editingIv._id}`, payload);
-        showToast('Interview updated', 'success');
+        const res = await API.put(`/interviews/${editingIv._id}`, payload);
+        if (res?.emailError) {
+          showToast(`Interview updated, but email failed: ${res.emailError}`, 'error');
+        } else {
+          showToast('Interview updated', 'success');
+        }
       } else {
-        await API.post('/interviews', payload);
-        showToast('Interview scheduled! Candidate notified by email.', 'success');
+        const res = await API.post('/interviews', payload);
+        if (res?.emailError) {
+          showToast(`Interview scheduled, but email failed: ${res.emailError}`, 'error');
+        } else {
+          showToast('Interview scheduled! Candidate notified by email.', 'success');
+        }
       }
       setScheduleModalOpen(false);
       fetchInterviews();

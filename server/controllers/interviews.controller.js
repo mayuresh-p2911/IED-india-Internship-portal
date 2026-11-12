@@ -43,8 +43,14 @@ const scheduleInterview = async (req, res) => {
     // Update application status
     await Application.findByIdAndUpdate(req.body.applicationId, { status: 'interview_scheduled' });
     const app = await Application.findById(req.body.applicationId);
-    if (app) await emailService.sendInterviewScheduled(app.email, app.name, interview);
-    res.status(201).json({ success: true, interview });
+    let emailResult = null;
+    if (app) emailResult = await emailService.sendInterviewScheduled(app.email, app.name, interview);
+    res.status(201).json({
+      success: true,
+      interview,
+      emailSent: Boolean(emailResult?.success && !emailResult?.mocked),
+      ...(emailResult && !emailResult.success ? { emailError: emailResult.error || 'Email delivery failed' } : {})
+    });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };
 
@@ -56,6 +62,7 @@ const updateInterview = async (req, res) => {
     if (!interview) return res.status(404).json({ success: false, message: 'Interview not found' });
 
     const app = interview.applicationId;
+    let emailResult = null;
 
     // ── Accept intern after interview ─────────────────────
     if (acceptIntern && app) {
@@ -98,18 +105,25 @@ const updateInterview = async (req, res) => {
           existingApp.status = 'selected';
           await existingApp.save();
 
+          emailResult = await emailService.sendSelectionEmail(app.email, app.name, tempPassword);
+          const welcomeSent = Boolean(emailResult?.success && !emailResult?.mocked);
+
           // Create onboarding record if it doesn't exist yet
           const existingOnboarding = await Onboarding.findOne({ internId });
           if (!existingOnboarding) {
-            await Onboarding.create({ internId, applicationId: app._id });
+            await Onboarding.create({ internId, applicationId: app._id, welcomeEmailSent: welcomeSent });
+          } else if (welcomeSent && !existingOnboarding.welcomeEmailSent) {
+            existingOnboarding.welcomeEmailSent = true;
+            await existingOnboarding.save();
           }
-
-          await emailService.sendSelectionEmail(app.email, app.name, tempPassword);
         } else {
           // Already has internId — just update status and resend welcome if needed
           existingApp.status = 'selected';
           await existingApp.save();
-          await emailService.sendSelectionEmail(app.email, app.name, '[Check your original email for credentials]');
+          emailResult = await emailService.sendSelectionEmail(app.email, app.name, '[Check your original email for credentials]');
+          if (emailResult?.success && !emailResult?.mocked) {
+            await Onboarding.updateOne({ internId }, { welcomeEmailSent: true });
+          }
         }
       }
     }
@@ -117,15 +131,27 @@ const updateInterview = async (req, res) => {
     // ── Reject intern after interview ─────────────────────
     if (rejectIntern && app) {
       await Application.findByIdAndUpdate(app._id, { status: 'rejected' });
-      await emailService.sendInterviewRejected(app.email, app.name, rejectionReason || '');
+      emailResult = await emailService.sendInterviewRejected(app.email, app.name, rejectionReason || '');
+    }
+
+    // ── If interview cancelled → notify candidate ─────────
+    if (updateFields.status === 'cancelled' && !acceptIntern && !rejectIntern && app) {
+      emailResult = await emailService.sendInterviewCancelled(app.email, app.name, interview);
     }
 
     // ── If interview rescheduled → send updated schedule email ──
-    if (updateFields.scheduledAt && !acceptIntern && !rejectIntern && app) {
-      await emailService.sendInterviewScheduled(app.email, app.name, interview);
+    if (updateFields.scheduledAt && updateFields.status !== 'cancelled' && !acceptIntern && !rejectIntern && app) {
+      emailResult = await emailService.sendInterviewScheduled(app.email, app.name, interview);
     }
 
-    res.json({ success: true, interview });
+    res.json({
+      success: true,
+      interview,
+      ...(emailResult ? {
+        emailSent: Boolean(emailResult.success && !emailResult.mocked),
+        ...(!emailResult.success ? { emailError: emailResult.error || 'Email delivery failed' } : {})
+      } : {})
+    });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };
 

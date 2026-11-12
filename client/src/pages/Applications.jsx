@@ -117,25 +117,29 @@ export function Applications() {
     try {
       const body = { status: newStatus };
       if (reason) body.rejectionReason = reason;
-      await API.patch(`/applications/${id}/status`, body);
+      const res = await API.patch(`/applications/${id}/status`, body);
 
       // Update state locally
       setApps((prev) =>
         prev.map((a) => (a._id === id ? { ...a, status: newStatus } : a))
       );
 
-      const messages = {
-        shortlisted: '✅ Applicant shortlisted. Email sent.',
-        rejected: '❌ Rejection email sent to applicant.',
-        selected: '🎉 Intern account created! Login credentials emailed.',
-        on_hold: 'Application placed on hold.',
-        interview_scheduled: 'Status updated.'
-      };
+      if (res?.emailError) {
+        showToast(`Status updated, but email failed: ${res.emailError}`, 'error');
+      } else {
+        const messages = {
+          shortlisted: '✅ Applicant shortlisted. Email sent.',
+          rejected: '❌ Rejection email sent to applicant.',
+          selected: '🎉 Intern account created! Login credentials emailed.',
+          on_hold: 'Application placed on hold.',
+          interview_scheduled: 'Status updated.'
+        };
 
-      showToast(
-        messages[newStatus] || `Status updated to "${STATUS_LABELS[newStatus]}"`,
-        newStatus === 'rejected' ? 'info' : 'success'
-      );
+        showToast(
+          messages[newStatus] || `Status updated to "${STATUS_LABELS[newStatus]}"`,
+          newStatus === 'rejected' ? 'info' : 'success'
+        );
+      }
 
       if (newStatus === 'shortlisted') {
         showToast('Next step: Go to Interviews to schedule their interview.', 'info');

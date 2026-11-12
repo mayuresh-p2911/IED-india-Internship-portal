@@ -1,4 +1,6 @@
 const Task = require('../models/Task');
+const User = require('../models/User');
+const emailService = require('../services/email.service');
 
 const getTasks = async (req, res) => {
   try {
@@ -25,7 +27,19 @@ const getTask = async (req, res) => {
 const createTask = async (req, res) => {
   try {
     const task = await Task.create({ ...req.body, assignedBy: req.user._id });
-    res.status(201).json({ success: true, task });
+    let emailResult = null;
+    const assignee = await User.findById(task.assignedTo).select('name email');
+    if (assignee?.email) {
+      emailResult = await emailService.sendTaskAssigned(assignee.email, assignee.name, task);
+    }
+    res.status(201).json({
+      success: true,
+      task,
+      ...(emailResult ? {
+        emailSent: Boolean(emailResult.success && !emailResult.mocked),
+        ...(!emailResult.success ? { emailError: emailResult.error || 'Email delivery failed' } : {})
+      } : {})
+    });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };
 

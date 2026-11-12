@@ -7,10 +7,9 @@ const nodemailer = require('nodemailer');
 const https = require('https');
 
 const BASE = 'https://ied-india-internship-portal.vercel.app';
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
 // ── Resend API Helper ─────────────────────────────────────────
-const sendViaResend = (to, subject, html) => {
+const sendViaResend = (to, subject, html, apiKey = process.env.RESEND_API_KEY) => {
   return new Promise((resolve) => {
     const fromAddress = process.env.EMAIL_FROM || 'IED India <onboarding@resend.dev>';
     const body = JSON.stringify({
@@ -26,7 +25,7 @@ const sendViaResend = (to, subject, html) => {
       path: '/emails',
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(body),
       },
@@ -62,35 +61,47 @@ const sendViaResend = (to, subject, html) => {
 };
 
 // ── SMTP Helper ──────────────────────────────────────────────
+const buildSmtpTransporter = (user, pass) => {
+  const host = (process.env.EMAIL_HOST || 'smtp.gmail.com').trim();
+  const port = parseInt(process.env.EMAIL_PORT, 10) || 465;
+  const cleanUser = user.trim();
+  const isGmail = cleanUser.toLowerCase().endsWith('@gmail.com') || host.toLowerCase().includes('gmail.com');
+  const cleanPass = isGmail ? pass.replace(/\s+/g, '') : pass.trim();
+
+  const timeouts = {
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
+  };
+
+  let transporterConfig;
+  if (isGmail && port !== 587) {
+    transporterConfig = {
+      service: 'gmail',
+      auth: { user: cleanUser, pass: cleanPass },
+      tls: { rejectUnauthorized: false },
+      ...timeouts,
+    };
+  } else {
+    transporterConfig = {
+      host,
+      port,
+      secure: port === 465,
+      auth: { user: cleanUser, pass: cleanPass },
+      tls: { rejectUnauthorized: false },
+      ...timeouts,
+    };
+  }
+
+  return { transporter: nodemailer.createTransport(transporterConfig), cleanUser };
+};
+
 const sendViaSMTP = async (to, subject, html, user, pass) => {
   try {
-    const host = process.env.EMAIL_HOST || 'smtp.gmail.com';
-    const port = parseInt(process.env.EMAIL_PORT) || 465;
+    const { transporter, cleanUser } = buildSmtpTransporter(user, pass);
 
-    // Use official service: 'gmail' configuration if email is @gmail.com or host is gmail.com
-    const isGmail = user.toLowerCase().endsWith('@gmail.com') || host.toLowerCase().includes('gmail.com');
-
-    const transporterConfig = isGmail
-      ? {
-          service: 'gmail',
-          auth: { user, pass },
-          tls: { rejectUnauthorized: false }
-        }
-      : {
-          host,
-          port,
-          secure: port === 465,
-          auth: { user, pass },
-          tls: { rejectUnauthorized: false },
-          connectionTimeout: 10000,
-          greetingTimeout: 10000,
-          socketTimeout: 15000,
-        };
-
-    const transporter = nodemailer.createTransport(transporterConfig);
-
-    const fromName = process.env.EMAIL_FROM_NAME || 'IED India';
-    const from = `"${fromName}" <${user}>`;
+    const fromName = (process.env.EMAIL_FROM_NAME || 'IED India').trim();
+    const from = `"${fromName}" <${cleanUser}>`;
 
     const info = await transporter.sendMail({ from, to, subject, html });
     console.log(`📧 [EMAIL SENT via SMTP] To: ${to} | Subject: ${subject} | MsgId: ${info.messageId}`);
@@ -105,8 +116,9 @@ const sendViaSMTP = async (to, subject, html, user, pass) => {
 
 // ── Core send function ──────────────────────────────────────
 const sendMail = async (to, subject, html) => {
-  const user = process.env.EMAIL_USER;
-  const pass = process.env.EMAIL_PASS;
+  const user = (process.env.EMAIL_USER || '').trim();
+  const pass = (process.env.EMAIL_PASS || '').trim();
+  const resendApiKey = (process.env.RESEND_API_KEY || '').trim();
 
   // 1. Prioritise SMTP (Gmail) if user credentials are set
   if (user && pass && user !== 'your-gmail@gmail.com' && pass !== 'your-16-char-app-password') {
@@ -114,22 +126,37 @@ const sendMail = async (to, subject, html) => {
     if (result.success) return result;
 
     // Fallback: If SMTP failed but Resend API key is configured, try Resend API
-    if (RESEND_API_KEY && RESEND_API_KEY !== 'your-resend-api-key') {
+    if (resendApiKey && resendApiKey !== 'your-resend-api-key') {
       console.log('🔄 SMTP failed. Trying fallback to Resend API...');
-      return sendViaResend(to, subject, html);
+      return sendViaResend(to, subject, html, resendApiKey);
     }
     return result;
   }
 
   // 2. Fallback to Resend API if API Key is set
-  if (RESEND_API_KEY && RESEND_API_KEY !== 'your-resend-api-key') {
-    return sendViaResend(to, subject, html);
+  if (resendApiKey && resendApiKey !== 'your-resend-api-key') {
+    return sendViaResend(to, subject, html, resendApiKey);
   }
 
   // 3. Fallback: Mock mode
   console.log(`📧 [MOCK EMAIL] To: ${to} | Subject: ${subject}`);
   console.log('   → Set EMAIL_USER/EMAIL_PASS (SMTP) or RESEND_API_KEY (HTTP) in env variables to send real emails.');
   return { success: true, mocked: true };
+};
+
+const verifySMTP = async () => {
+  const user = (process.env.EMAIL_USER || '').trim();
+  const pass = (process.env.EMAIL_PASS || '').trim();
+  if (!user || !pass) {
+    return { success: false, error: 'EMAIL_USER or EMAIL_PASS is not configured' };
+  }
+  try {
+    const { transporter } = buildSmtpTransporter(user, pass);
+    await transporter.verify();
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message, code: err.code, response: err.response };
+  }
 };
 
 // ── HTML helpers ────────────────────────────────────────────
@@ -236,6 +263,36 @@ const emailService = {
       ${_btn('View Portal', BASE)}
       <p style="color:#94a3b8;font-size:13px;margin-top:24px">Warm regards,<br><strong>IED India HR Team</strong></p>
     `)),
+
+  sendInterviewCancelled: (email, name, interview) => sendMail(email,
+    'Interview Cancelled - IED India',
+    _wrap(`
+      <h2 style="color:#022654;margin-top:0">Interview Cancelled</h2>
+      <p style="color:#475569">Dear <strong>${name}</strong>,</p>
+      <p style="color:#475569;line-height:1.7">Your scheduled interview${interview?.scheduledAt ? ` for <strong>${new Date(interview.scheduledAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</strong>` : ''} has been <strong style="color:#E94560">cancelled</strong>.</p>
+      <p style="color:#475569;line-height:1.7">Our HR team will reach out to you if a new slot is scheduled.</p>
+      <p style="color:#94a3b8;font-size:13px;margin-top:24px">Warm regards,<br><strong>IED India HR Team</strong></p>
+    `)),
+
+  sendTaskAssigned: (email, name, task) => sendMail(email,
+    `New Task Assigned: ${task?.title || 'Internship Task'} - IED India`,
+    _wrap(`
+      <h2 style="color:#022654;margin-top:0">New Task Assigned</h2>
+      <p style="color:#475569">Dear <strong>${name}</strong>,</p>
+      <p style="color:#475569;line-height:1.7">A new task has been assigned to you on the <strong>IED India Internship Portal</strong>:</p>
+      <div style="background:#f0f4f8;border-radius:10px;padding:20px;margin:20px 0">
+        <table style="width:100%;border-collapse:collapse">
+          <tr><td style="padding:8px 0;color:#94a3b8;font-size:13px;width:120px">Title</td><td style="padding:8px 0;color:#0f172a;font-weight:600">${task?.title || 'Task'}</td></tr>
+          ${task?.priority ? `<tr><td style="padding:8px 0;color:#94a3b8;font-size:13px">Priority</td><td style="padding:8px 0;color:#0f172a;font-weight:600;text-transform:capitalize">${task.priority}</td></tr>` : ''}
+          ${task?.deadline ? `<tr><td style="padding:8px 0;color:#94a3b8;font-size:13px">Deadline</td><td style="padding:8px 0;color:#0f172a;font-weight:600">${new Date(task.deadline).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</td></tr>` : ''}
+        </table>
+        ${task?.description ? `<p style="margin:12px 0 0;color:#475569;font-size:13px;line-height:1.6">${task.description}</p>` : ''}
+      </div>
+      ${_btn('Open Portal', BASE)}
+      <p style="color:#94a3b8;font-size:13px;margin-top:24px">Warm regards,<br><strong>IED India Team</strong></p>
+    `)),
+
+  verifySMTP,
 };
 
 module.exports = emailService;

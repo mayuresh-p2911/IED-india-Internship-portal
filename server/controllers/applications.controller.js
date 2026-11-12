@@ -76,8 +76,14 @@ const submitApplication = async (req, res) => {
       if (req.files.photo) data.photo = `/uploads/applications/${req.files.photo[0].filename}`;
     }
     const application = await Application.create(data);
-    await emailService.sendApplicationReceived(application.email, application.name);
-    res.status(201).json({ success: true, message: 'Application submitted successfully!', application: normalizeAppPaths(application) });
+    const emailResult = await emailService.sendApplicationReceived(application.email, application.name);
+    res.status(201).json({
+      success: true,
+      message: 'Application submitted successfully!',
+      application: normalizeAppPaths(application),
+      emailSent: Boolean(emailResult?.success && !emailResult?.mocked),
+      ...(emailResult?.success ? {} : { emailError: emailResult?.error || 'Email delivery failed' })
+    });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };
 
@@ -93,14 +99,16 @@ const updateStatus = async (req, res) => {
     );
     if (!application) return res.status(404).json({ success: false, message: 'Application not found' });
 
+    let emailResult = null;
+
     // ── Handle each status transition ──────────────────────
     if (status === 'shortlisted') {
       // Notify applicant they've been shortlisted
-      await emailService.sendShortlisted(application.email, application.name);
+      emailResult = await emailService.sendShortlisted(application.email, application.name);
 
     } else if (status === 'rejected') {
       // Send rejection email with optional reason
-      await emailService.sendApplicationRejected(application.email, application.name, rejectionReason || notes || '');
+      emailResult = await emailService.sendApplicationRejected(application.email, application.name, rejectionReason || notes || '');
 
     } else if (status === 'selected') {
       // Intern accepted after interview — create account + send credentials
@@ -139,21 +147,39 @@ const updateStatus = async (req, res) => {
         application.internId = internId;
         await application.save();
 
+        // Send welcome email with login credentials
+        emailResult = await emailService.sendSelectionEmail(application.email, application.name, tempPassword);
+        const welcomeSent = Boolean(emailResult?.success && !emailResult?.mocked);
+
         // Create onboarding record if it doesn't exist yet
         const existingOnboarding = await Onboarding.findOne({ internId });
         if (!existingOnboarding) {
-          await Onboarding.create({ internId, applicationId: application._id });
+          await Onboarding.create({ internId, applicationId: application._id, welcomeEmailSent: welcomeSent });
+        } else if (welcomeSent && !existingOnboarding.welcomeEmailSent) {
+          existingOnboarding.welcomeEmailSent = true;
+          await existingOnboarding.save();
         }
-
-        // Send welcome email with login credentials
-        await emailService.sendSelectionEmail(application.email, application.name, tempPassword);
+      } else {
+        emailResult = await emailService.sendSelectionEmail(
+          application.email,
+          application.name,
+          '[Check your original email for credentials]'
+        );
+        if (emailResult?.success && !emailResult?.mocked) {
+          await Onboarding.updateOne({ internId: application.internId }, { welcomeEmailSent: true });
+        }
       }
     } else {
       // Generic status update (on_hold, interview_scheduled, etc.)
-      await emailService.sendStatusUpdate(application.email, application.name, status);
+      emailResult = await emailService.sendStatusUpdate(application.email, application.name, status);
     }
 
-    res.json({ success: true, application: normalizeAppPaths(application) });
+    res.json({
+      success: true,
+      application: normalizeAppPaths(application),
+      emailSent: Boolean(emailResult?.success && !emailResult?.mocked),
+      ...(emailResult && !emailResult.success ? { emailError: emailResult.error || 'Email delivery failed' } : {})
+    });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };
 
