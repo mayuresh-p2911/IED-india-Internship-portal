@@ -1,6 +1,6 @@
 import { CalendarCheck, CheckSquare, Award, BookOpen, ShoppingBag, TrendingUp, Globe, ArrowRight } from 'lucide-react';
 
-export function LandingPage({ onGoToLogin }) {
+export function LandingPage({ onGoToLogin, onGoToReferralLogin }) {
   return (
     <div id="landing-page" className="landing-page">
       <header className="lp-header">
@@ -16,6 +16,9 @@ export function LandingPage({ onGoToLogin }) {
           </a>
           <a className="lp-nav-link" href="#lp-pricing">
             Pricing
+          </a>
+          <a className="lp-nav-link" onClick={onGoToReferralLogin} style={{ cursor: 'pointer' }}>
+            Referral Partner
           </a>
           <a className="lp-signin" id="landing-signin" onClick={onGoToLogin} style={{ cursor: 'pointer' }}>
             Sign in

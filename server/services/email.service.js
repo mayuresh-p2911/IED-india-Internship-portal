@@ -369,6 +369,81 @@ const emailService = {
     `)),
 
   verifySMTP,
+
+  // ── Referral Partner Emails ──────────────────────────────
+
+  sendReferralPartnerWelcome: (email, name, referralCode) => sendMail(
+    email,
+    'Welcome to IED India Referral Partner Program!',
+    _wrap(`
+      <h2 style="color:#022654;margin-top:0">Welcome, Referral Partner!</h2>
+      <p style="color:#475569">Dear <strong>${_esc(name)}</strong>,</p>
+      <p style="color:#475569;line-height:1.7">Thank you for joining the IED India Referral Partner Program. Your unique referral code is:</p>
+      <div style="background:#f0f9ff;border:2px dashed #03377A;border-radius:10px;padding:20px;text-align:center;margin:16px 0">
+        <div style="font-size:28px;font-weight:800;color:#03377A;letter-spacing:2px">${_esc(referralCode)}</div>
+        <p style="color:#64748b;font-size:13px;margin:8px 0 0">Share this code with students applying for internships</p>
+      </div>
+      <p style="color:#475569;line-height:1.7">When students use your code during their application, you'll earn a commission on each successful payment. Track your referrals and commissions from your dashboard.</p>
+      ${_btn('Go to Dashboard', BASE)}
+      <p style="color:#94a3b8;font-size:13px;margin-top:24px">Warm regards,<br><strong>IED India Team</strong></p>
+    `)
+  ),
+
+  sendCommissionEarned: (email, name, studentName, amount) => sendMail(
+    email,
+    'Commission Earned - IED India Referral Program',
+    _wrap(`
+      <h2 style="color:#022654;margin-top:0">Commission Earned!</h2>
+      <p style="color:#475569">Dear <strong>${_esc(name)}</strong>,</p>
+      <p style="color:#475569;line-height:1.7">Great news! A student referred by you has completed their application payment.</p>
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:16px;margin:16px 0">
+        <table style="width:100%;border-collapse:collapse">
+          <tr><td style="padding:6px 0;color:#94a3b8;font-size:13px">Student</td><td style="padding:6px 0;color:#0f172a;font-weight:600">${_esc(studentName)}</td></tr>
+          <tr><td style="padding:6px 0;color:#94a3b8;font-size:13px">Commission Earned</td><td style="padding:6px 0;color:#16a34a;font-weight:700;font-size:18px">₹${amount}</td></tr>
+        </table>
+      </div>
+      <p style="color:#475569;line-height:1.7">This commission has been added to your available balance. You can request a payout from your dashboard.</p>
+      ${_btn('View Dashboard', BASE)}
+      <p style="color:#94a3b8;font-size:13px;margin-top:24px">Warm regards,<br><strong>IED India Team</strong></p>
+    `)
+  ),
+
+  sendPayoutStatusUpdate: (email, name, status, amount, utr) => sendMail(
+    email,
+    `Payout ${status.charAt(0).toUpperCase() + status.slice(1)} - IED India`,
+    _wrap(`
+      <h2 style="color:#022654;margin-top:0">Payout ${_esc(status.charAt(0).toUpperCase() + status.slice(1))}</h2>
+      <p style="color:#475569">Dear <strong>${_esc(name)}</strong>,</p>
+      <p style="color:#475569;line-height:1.7">Your payout request has been updated.</p>
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin:16px 0">
+        <table style="width:100%;border-collapse:collapse">
+          <tr><td style="padding:6px 0;color:#94a3b8;font-size:13px">Amount</td><td style="padding:6px 0;color:#0f172a;font-weight:700;font-size:18px">₹${amount}</td></tr>
+          <tr><td style="padding:6px 0;color:#94a3b8;font-size:13px">Status</td><td style="padding:6px 0;color:#03377A;font-weight:700">${_esc(status.toUpperCase())}</td></tr>
+          ${utr ? `<tr><td style="padding:6px 0;color:#94a3b8;font-size:13px">UTR / Reference</td><td style="padding:6px 0;color:#0f172a;font-weight:600">${_esc(utr)}</td></tr>` : ''}
+        </table>
+      </div>
+      ${_btn('View Payouts', BASE)}
+      <p style="color:#94a3b8;font-size:13px;margin-top:24px">Warm regards,<br><strong>IED India Team</strong></p>
+    `)
+  ),
+
+  sendPayoutRequested: (adminEmail, partnerName, amount) => sendMail(
+    adminEmail,
+    'New Payout Request - IED India Referral Program',
+    _wrap(`
+      <h2 style="color:#022654;margin-top:0">New Payout Request</h2>
+      <p style="color:#475569;line-height:1.7">A referral partner has submitted a payout request.</p>
+      <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:16px;margin:16px 0">
+        <table style="width:100%;border-collapse:collapse">
+          <tr><td style="padding:6px 0;color:#94a3b8;font-size:13px">Partner</td><td style="padding:6px 0;color:#0f172a;font-weight:600">${_esc(partnerName)}</td></tr>
+          <tr><td style="padding:6px 0;color:#94a3b8;font-size:13px">Amount</td><td style="padding:6px 0;color:#ea580c;font-weight:700;font-size:18px">₹${amount}</td></tr>
+        </table>
+      </div>
+      <p style="color:#475569;line-height:1.7">Please review and process this request from the admin dashboard.</p>
+      ${_btn('Review Payouts', BASE)}
+      <p style="color:#94a3b8;font-size:13px;margin-top:24px">Warm regards,<br><strong>IED India System</strong></p>
+    `)
+  ),
 };
 
 module.exports = emailService;

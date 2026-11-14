@@ -1,6 +1,9 @@
 const Application = require('../models/Application');
 const User = require('../models/User');
 const Onboarding = require('../models/Onboarding');
+const PricingConfig = require('../models/PricingConfig');
+const ReferralPartner = require('../models/ReferralPartner');
+const Commission = require('../models/Commission');
 const emailService = require('../services/email.service');
 const razorpayService = require('../services/razorpay.service');
 
@@ -71,11 +74,25 @@ const getApplication = async (req, res) => {
 // @route GET /api/applications/payment-config
 const getPaymentConfig = async (req, res) => {
   const cfg = razorpayService.getConfig();
+  const { department } = req.query;
+
+  let dbFee = null;
+  try {
+    if (department) {
+      const deptConfig = await PricingConfig.findOne({ department, isActive: true });
+      if (deptConfig) dbFee = deptConfig.applicationFee;
+    }
+    if (dbFee === null) {
+      const defaultConfig = await PricingConfig.findOne({ department: null, isActive: true });
+      if (defaultConfig) dbFee = defaultConfig.applicationFee;
+    }
+  } catch (_) {}
+
   res.json({
     success: true,
     enabled: cfg.isConfigured,
     keyId: cfg.isConfigured ? cfg.keyId : '',
-    amountInr: cfg.feeInr,
+    amountInr: dbFee !== null ? dbFee : cfg.feeInr,
     currency: cfg.currency
   });
 };
@@ -94,13 +111,26 @@ const createApplicationOrder = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Name, email, and phone are required before initiating payment.' });
     }
 
+    let amountInr = null;
+    try {
+      if (department) {
+        const deptConfig = await PricingConfig.findOne({ department, isActive: true });
+        if (deptConfig) amountInr = deptConfig.applicationFee;
+      }
+      if (amountInr === null) {
+        const defaultConfig = await PricingConfig.findOne({ department: null, isActive: true });
+        if (defaultConfig) amountInr = defaultConfig.applicationFee;
+      }
+    } catch (_) {}
+
     const order = await razorpayService.createOrder({
       receipt: `ied_app_${Date.now()}`,
       notes: {
         applicantName: String(name).trim().slice(0, 80),
         applicantEmail: String(email).trim().toLowerCase().slice(0, 80),
         department: String(department || '').trim().slice(0, 80)
-      }
+      },
+      amountInr
     });
 
     res.json({ success: true, ...order });
@@ -170,7 +200,77 @@ const submitApplication = async (req, res) => {
       if (req.files.resume) data.resume = `/uploads/applications/${req.files.resume[0].filename}`;
       if (req.files.photo) data.photo = `/uploads/applications/${req.files.photo[0].filename}`;
     }
+
+    // Referral code attribution (only after successful payment verification)
+    const submittedReferralCode = (restBody.referralCode || '').trim().toUpperCase();
+    if (submittedReferralCode && paymentData) {
+      try {
+        const partner = await ReferralPartner.findOne({ referralCode: submittedReferralCode })
+          .populate('userId', 'email name');
+        if (partner && partner.userId && partner.userId.email !== (restBody.email || '').toLowerCase().trim()) {
+          let pricingConfig = await PricingConfig.findOne({ department: restBody.department, isActive: true });
+          if (!pricingConfig) pricingConfig = await PricingConfig.findOne({ department: null, isActive: true });
+          const commissionPercent = pricingConfig ? pricingConfig.commissionPercent : 10;
+          const commissionAmount = Math.round((paymentData.amount * commissionPercent / 100) * 100) / 100;
+
+          const now = new Date();
+          const dayOfWeek = now.getDay();
+          const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+          const weekStart = new Date(now);
+          weekStart.setDate(now.getDate() + mondayOffset);
+          weekStart.setHours(0, 0, 0, 0);
+          const weekEnd = new Date(weekStart);
+          weekEnd.setDate(weekStart.getDate() + 6);
+          weekEnd.setHours(23, 59, 59, 999);
+
+          const commission = await Commission.create({
+            referralPartnerId: partner._id,
+            applicationId: null,
+            studentName: restBody.name || '',
+            studentEmail: (restBody.email || '').toLowerCase(),
+            applicationFee: paymentData.amount,
+            commissionPercent,
+            commissionAmount,
+            razorpayPaymentId: paymentData.paymentId || '',
+            status: 'confirmed',
+            weekStart,
+            weekEnd,
+            confirmedAt: new Date()
+          });
+
+          data.referralCode = submittedReferralCode;
+          data.referralPartnerId = partner._id;
+          data.commissionId = commission._id;
+
+          partner.totalReferred = (partner.totalReferred || 0) + 1;
+          partner.totalEarnings = (partner.totalEarnings || 0) + commissionAmount;
+          partner.availableBalance = (partner.availableBalance || 0) + commissionAmount;
+          await partner.save();
+
+          // Update commission with applicationId after creation below
+          data._pendingCommissionId = commission._id;
+
+          try {
+            await emailService.sendCommissionEarned(
+              partner.userId.email, partner.userId.name,
+              restBody.name || 'A student', commissionAmount
+            );
+          } catch (_) {}
+        }
+      } catch (refErr) {
+        console.warn('[WARN] Referral attribution failed (non-blocking):', refErr.message);
+      }
+    }
+
     const application = await Application.create(data);
+
+    // Link commission to the created application
+    if (data._pendingCommissionId) {
+      try {
+        await Commission.findByIdAndUpdate(data._pendingCommissionId, { applicationId: application._id });
+      } catch (_) {}
+    }
+
     const emailResult = await emailService.sendApplicationReceived(
       application.email,
       application.name,

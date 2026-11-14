@@ -63,10 +63,12 @@ const razorpayRequest = (method, path, payload = null) => {
   });
 };
 
-const createOrder = async ({ receipt, notes = {} }) => {
-  const { keyId, feeInr, amountPaise, currency } = getConfig();
+const createOrder = async ({ receipt, notes = {}, amountInr = null }) => {
+  const { keyId, feeInr, currency } = getConfig();
+  const finalFee = (amountInr && Number.isFinite(amountInr) && amountInr > 0) ? amountInr : feeInr;
+  const finalPaise = Math.round(finalFee * 100);
   const order = await razorpayRequest('POST', '/v1/orders', {
-    amount: amountPaise,
+    amount: finalPaise,
     currency,
     receipt: String(receipt || `ied_app_${Date.now()}`).slice(0, 40),
     notes
@@ -75,7 +77,7 @@ const createOrder = async ({ receipt, notes = {} }) => {
   return {
     orderId: order.id,
     amount: order.amount,
-    amountInr: feeInr,
+    amountInr: finalFee,
     currency: order.currency || currency,
     keyId
   };

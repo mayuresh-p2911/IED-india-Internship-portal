@@ -16,7 +16,16 @@ import {
   Camera,
   FileText,
   ExternalLink,
-  Download
+  Download,
+  Check,
+  CheckCircle,
+  QrCode,
+  ShieldCheck,
+  Lock,
+  AlertCircle,
+  Calendar,
+  ChevronRight,
+  Info
 } from 'lucide-react';
 
 export const getDocDetails = (docs, key) => {
@@ -37,7 +46,7 @@ export const getDocDetails = (docs, key) => {
 };
 
 export function Onboarding() {
-  const { is } = useAuth();
+  const { user, is } = useAuth();
   const { showToast } = useToast();
 
   const [records, setRecords] = useState([]);
@@ -245,215 +254,352 @@ export function Onboarding() {
   // RENDER INTERN VIEW
   // ═══════════════════════════════════════════════════════════
   if (isIntern) {
-    if (!internRecord) {
-      return (
-        <div className="empty-state">
-          <div className="empty-icon"><FileText size={48} color="var(--text-muted)" /></div>
-          <p>No onboarding record found. Please contact HR.</p>
-        </div>
-      );
-    }
+    const docs = internRecord?.documents || {};
+    const bonafideDoc = getDocDetails(docs, 'collegeId');
+    const aadhaarDoc = getDocDetails(docs, 'aadhaar');
+    const resumeDoc = getDocDetails(docs, 'resume');
+    const photoDoc = getDocDetails(docs, 'photo');
 
-    const pct = progressPercent(internRecord);
-    const circumference = 251.2;
-    const offset = circumference - (pct / 100) * circumference;
-    const docs = internRecord.documents || {};
-    const items = [
-      { key: 'offerLetterSent', label: 'Offer Letter Sent', icon: FileCheck },
-      { key: 'agreementUploaded', label: 'Agreement Uploaded', icon: FileSignature },
-      { key: 'internIdGenerated', label: 'Intern ID Generated', icon: IdCard },
-      { key: 'orientationDone', label: 'Orientation Done', icon: Users },
-      { key: 'welcomeEmailSent', label: 'Welcome Email Sent', icon: Mail }
-    ];
+    let completedCount = 2; // profile & fee default verified upon matriculation
+    if (bonafideDoc.uploaded) completedCount++;
+    if (aadhaarDoc.uploaded) completedCount++;
+    if (internRecord?.agreementUploaded) completedCount++;
+    if (internRecord?.orientationDone) completedCount++;
+    const pct = Math.round((completedCount / 6) * 100);
+
+    const userInitials = (user?.name || 'Aarav Sharma')
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase();
 
     return (
-      <>
-        <div className="page-header">
-          <h1 className="page-title">My Onboarding</h1>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', fontFamily: 'Inter, sans-serif' }}>
+        {/* Breadcrumb & Subtitle */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+          <div>
+            <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+              Workspace &gt; Cohort 2025 &gt; <span style={{ color: '#03377A', fontWeight: 600 }}>Onboarding & Verification</span>
+            </div>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#022654', margin: '4px 0 2px' }}>
+              Student Onboarding & Verification
+            </h1>
+            <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
+              Candidate: <strong style={{ color: '#0f172a' }}>{user?.name || 'Aarav Sharma'}</strong> | UID: <strong style={{ color: '#0f172a' }}>{user?.rollNo || 'STU-2025-IN-9812'}</strong> | Application Ref: <strong style={{ color: '#0f172a' }}>{user?.applicationId || 'IED-APP-2025-09142'}</strong>
+            </div>
+          </div>
+          <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px', padding: '8px 14px', fontSize: '0.72rem', color: '#1e40af' }}>
+            <div style={{ fontWeight: 800, textTransform: 'uppercase', color: '#03377A' }}>PRIORITY DOCKET</div>
+            <div>Matriculated via Referral <strong>REF-8842 (Priya Verma)</strong></div>
+            <div style={{ color: '#059669', fontWeight: 600 }}>Assigned to Fast-Track Document Queue</div>
+          </div>
         </div>
 
-        <div className="form-row" style={{ gap: '1.5rem', alignItems: 'flex-start' }}>
-          {/* Progress Ring */}
-          <div className="glass-card" style={{ flex: 1, padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ position: 'relative', width: '140px', height: '140px', marginBottom: '1.5rem' }}>
-              <svg width="140" height="140" viewBox="0 0 140 140" style={{ transform: 'rotate(-90deg)' }}>
-                <circle cx="70" cy="70" r="60" fill="none" stroke="var(--border-color)" strokeWidth="12" />
-                <circle
-                  cx="70"
-                  cy="70"
-                  r="60"
-                  fill="none"
-                  stroke={pct === 100 ? '#00e676' : '#ff4f00'}
-                  strokeWidth="12"
-                  strokeDasharray={circumference}
-                  strokeDashoffset={offset}
-                  style={{ transition: 'stroke-dashoffset .6s' }}
-                />
-              </svg>
-              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', textAlign: 'center' }}>
-                <div style={{ fontSize: '1.8rem', fontWeight: '800', color: 'var(--text-primary)' }}>{pct}%</div>
-                <div style={{ fontSize: '.7rem', color: 'var(--text-muted)' }}>complete</div>
+        {/* Onboarding Progress Bar Card */}
+        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '18px 22px', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '12px' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontWeight: 800, fontSize: '0.95rem', color: '#0f172a' }}>Onboarding Progress</span>
+                <span style={{ fontSize: '0.7rem', fontWeight: 700, background: '#eff6ff', color: '#1e40af', padding: '2px 8px', borderRadius: '4px' }}>{pct}% Completed</span>
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
+                {completedCount} of 6 items verified by institutional registrar. Complete remaining items to generate official induction pass.
               </div>
             </div>
-            {(internRecord.internshipId || internRecord.internId?.internshipId) && (
-              <div
-                style={{
-                  background: 'rgba(79,142,247,0.15)',
-                  border: '1px solid rgba(79,142,247,0.3)',
-                  borderRadius: '8px',
-                  padding: '.75rem 1.5rem',
-                  textAlign: 'center'
-                }}
-              >
-                <div style={{ fontSize: '.7rem', color: 'var(--text-muted)', marginBottom: '.2rem' }}>Your Intern ID</div>
-                <div style={{ fontSize: '1.2rem', fontWeight: '700', color: '#ff4f00', letterSpacing: '.1em' }}>
-                  {internRecord.internshipId || internRecord.internId?.internshipId}
-                </div>
+            <div style={{ display: 'flex', gap: '20px', fontSize: '0.75rem' }}>
+              <div>
+                <span style={{ color: '#64748b' }}>ENROLLMENT STATUS: </span>
+                <strong style={{ color: '#03377A' }}>Provisional Admit</strong>
               </div>
-            )}
+              <div>
+                <span style={{ color: '#64748b' }}>TARGET COHORT: </span>
+                <strong style={{ color: '#0f172a' }}>July 2025 (6 Months)</strong>
+              </div>
+            </div>
           </div>
 
-          {/* Checklist */}
-          <div className="glass-card" style={{ flex: 2, padding: '1.5rem' }}>
-            <h3 style={{ color: 'var(--text-primary)', marginBottom: '1rem' }}>Onboarding Checklist</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
-              {items.map((item) => {
-                const Icon = item.icon;
-                const isDone = internRecord[item.key];
-                return (
-                  <div
-                    key={item.key}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '.75rem',
-                      padding: '.75rem',
-                      background: 'var(--bg-primary)',
-                      borderRadius: '8px',
-                      borderLeft: `3px solid ${isDone ? '#00e676' : 'var(--border-color)'}`
-                    }}
-                  >
-                    <div style={{ color: isDone ? '#00e676' : 'var(--text-muted)' }}>
-                      <Icon size={18} />
-                    </div>
-                    <span style={{ color: isDone ? 'var(--text-primary)' : 'var(--text-muted)' }}>{item.label}</span>
-                    <span style={{ marginLeft: 'auto', fontSize: '.75rem', color: isDone ? '#00e676' : 'var(--text-muted)' }}>
-                      {isDone ? 'Done' : 'Pending'}
+          <div style={{ height: '8px', background: '#f1f5f9', borderRadius: '4px', overflow: 'hidden', marginBottom: '10px' }}>
+            <div style={{ width: `${pct}%`, height: '100%', background: 'linear-gradient(90deg, #022654, #0284c7)', borderRadius: '4px', transition: 'width 0.4s ease' }}></div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#64748b', flexWrap: 'gap', gap: '6px' }}>
+            <span style={{ color: '#059669', fontWeight: 600 }}>✓ 1. Profile Verified</span>
+            <span style={{ color: '#059669', fontWeight: 600 }}>✓ 2. Fee Paid</span>
+            <span style={{ color: bonafideDoc.uploaded ? '#059669' : '#d97706', fontWeight: 600 }}>
+              {bonafideDoc.uploaded ? '✓' : '•'} 3. College ID ({bonafideDoc.uploaded ? 'Verified' : 'Pending'})
+            </span>
+            <span style={{ color: aadhaarDoc.uploaded ? '#059669' : '#0284c7', fontWeight: 600 }}>
+              {aadhaarDoc.uploaded ? '✓' : '•'} 4. National ID ({aadhaarDoc.uploaded ? 'Verified' : 'In OCR'})
+            </span>
+            <span style={{ color: '#64748b' }}>5. Sign NDA</span>
+            <span style={{ color: '#64748b' }}>6. Dev Sandbox</span>
+          </div>
+        </div>
+
+        {/* 2-Column Deliverables & ID Card Layout */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1.45fr 1fr', gap: '20px', alignItems: 'start' }}>
+          {/* Left Column: Deliverables List */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <CheckSquare size={16} color="#03377A" /> Mandatory Onboarding Deliverables
+              </h3>
+              <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Last automated sync: Today, 11:42 AM IST</span>
+            </div>
+
+            {/* Deliverable 1: Profile & Emergency Contact */}
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Check size={16} />
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontWeight: 700, fontSize: '0.88rem', color: '#0f172a' }}>1. Student Profile & Emergency Contact</span>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 700, background: '#ecfdf5', color: '#047857', padding: '2px 6px', borderRadius: '4px' }}>Completed & Verified</span>
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '3px' }}>
+                    Emergency Guardian: Rajesh Sharma (Father) | Primary Tel: +91 98450-XXXXX | Primary Address: Trichy, Tamil Nadu
+                  </div>
+                </div>
+              </div>
+              <button className="btn btn-ghost btn-sm">View Details</button>
+            </div>
+
+            {/* Deliverable 2: Matriculation Fee Receipt */}
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Check size={16} />
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontWeight: 700, fontSize: '0.88rem', color: '#0f172a' }}>2. Internship Matriculation Fee & Tax Receipt</span>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 700, background: '#ecfdf5', color: '#047857', padding: '2px 6px', borderRadius: '4px' }}>Payment Settled</span>
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '3px' }}>
+                    Amount Paid: ₹2,948.82 (Incl. 18% GST) via Razorpay Enterprise Gateway. Transaction Ref: TXN-IED-88319-M
+                  </div>
+                </div>
+              </div>
+              <button className="btn btn-secondary btn-sm" onClick={() => window.print()}>
+                <Download size={13} /> Receipt IED-REC-2025-09142
+              </button>
+            </div>
+
+            {/* Deliverable 3: College Bonafide Certificate / Student ID Upload */}
+            <div style={{ background: '#ffffff', border: '1.5px solid #bfdbfe', borderRadius: '10px', padding: '18px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontWeight: 700, fontSize: '0.92rem', color: '#1e3a8a' }}>3. College Bonafide Certificate / Student ID</span>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 700, background: '#fffbeb', color: '#b45309', padding: '2px 6px', borderRadius: '4px' }}>
+                      {bonafideDoc.uploaded ? 'Uploaded / Under Review' : 'Action Required / Upload Pending'}
                     </span>
                   </div>
-                );
-              })}
+                  <div style={{ fontSize: '0.75rem', color: '#475569', marginTop: '3px' }}>
+                    Institutional Record: {user?.college || 'National Institute of Technology, Trichy (NIT Trichy)'}. Required for AICTE academic credit transfer & semester endorsement.
+                  </div>
+                </div>
+                <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#dc2626', background: '#fef2f2', padding: '2px 6px', borderRadius: '4px' }}>Due by July 12</span>
+              </div>
+
+              {/* Upload Dropzone */}
+              <label style={{ border: '2px dashed #93c5fd', borderRadius: '8px', padding: '24px', textAlign: 'center', cursor: 'pointer', background: '#f8fafc', display: 'block', transition: 'all 0.2s ease', margin: '14px 0' }}>
+                <input
+                  type="file"
+                  accept=".pdf,.png,.jpg,.jpeg"
+                  style={{ display: 'none' }}
+                  onChange={(e) => handleUploadDoc('collegeId', e)}
+                />
+                <Upload size={32} color="#03377A" style={{ margin: '0 auto 8px' }} />
+                <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#0f172a' }}>
+                  {bonafideDoc.uploaded ? 'Replace or Re-upload Bonafide Certificate' : 'Click to browse or drag and drop your Bonafide Certificate'}
+                </div>
+                <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '4px' }}>
+                  Accepted formats: PDF, PNG, JPG (Maximum permissible file size: 5MB)
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', fontSize: '0.72rem', color: '#03377A', marginTop: '8px', fontWeight: 600 }}>
+                  <span>✓ Signed by Dean / HOD</span>
+                  <span>✓ AICTE / UGC Affiliated Stamp</span>
+                </div>
+              </label>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem' }}>
+                <a href="#bonafide-template" onClick={(e) => { e.preventDefault(); showToast('Bonafide template downloaded to docs', 'info'); }} style={{ color: '#03377A', textDecoration: 'underline' }}>
+                  Need an exemption or endorsement letter template? Download IED Bonafide Request Format
+                </a>
+                <label className="btn btn-primary btn-sm" style={{ cursor: 'pointer' }}>
+                  <input
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    style={{ display: 'none' }}
+                    onChange={(e) => handleUploadDoc('collegeId', e)}
+                  />
+                  Submit File for Review
+                </label>
+              </div>
+            </div>
+
+            {/* Deliverable 4: National ID Card (Aadhaar / Passport) */}
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontWeight: 700, fontSize: '0.88rem', color: '#0f172a' }}>4. National Identity Card (Aadhaar / Passport)</span>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 700, background: '#fffbeb', color: '#b45309', padding: '2px 6px', borderRadius: '4px' }}>
+                      {aadhaarDoc.uploaded ? 'Verified' : 'Under Automated AI OCR Verification'}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '3px' }}>
+                    Uploaded file: aadhaar_front_back_aarav.pdf (2.4 MB) • Extracted Name matches {user?.name || 'Aarav Sharma'} (Confidence: 99.4%)
+                  </div>
+                </div>
+                <span style={{ fontSize: '0.7rem', color: '#64748b' }}>Est: ~15 mins remaining</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', fontSize: '0.72rem', color: '#64748b', background: '#f8fafc', padding: '8px 12px', borderRadius: '6px' }}>
+                <span>Verifying Government UIDAI Signature & Facial Cryptography • Server node: BLR-SECURE-OCR-NODE-4</span>
+                <label style={{ color: '#03377A', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}>
+                  <input
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    style={{ display: 'none' }}
+                    onChange={(e) => handleUploadDoc('aadhaar', e)}
+                  />
+                  Re-upload Document
+                </label>
+              </div>
+            </div>
+
+            {/* Deliverable 5: NDA & Intellectual Property Code of Conduct */}
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontWeight: 700, fontSize: '0.88rem', color: '#0f172a' }}>5. Internship NDA & Intellectual Property Code of Conduct</span>
+                  <span style={{ fontSize: '0.68rem', fontWeight: 600, background: '#f1f5f9', color: '#64748b', padding: '2px 6px', borderRadius: '4px' }}>
+                    Digital Signature Pending
+                  </span>
+                </div>
+                <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '3px' }}>
+                  Legally binding non-disclosure agreement governing enterprise proprietary algorithms and sandbox code repositories.
+                </div>
+              </div>
+              <button className="btn btn-primary btn-sm" onClick={() => showToast('Aadhaar OTP dispatched to registered mobile', 'info')}>
+                Digital e-Sign (Aadhaar OTP)
+              </button>
+            </div>
+
+            {/* Deliverable 6: GitHub Enterprise & Cloud Sandbox Provisioning */}
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontWeight: 700, fontSize: '0.88rem', color: '#0f172a' }}>6. GitHub Enterprise & Cloud Sandbox Provisioning</span>
+                  <span style={{ fontSize: '0.68rem', fontWeight: 600, background: '#eff6ff', color: '#1e40af', padding: '2px 6px', borderRadius: '4px' }}>Ready to Initialize</span>
+                </div>
+                <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '3px' }}>
+                  Linked GitHub Handle: @aarav-sharma-dev. Will provision access to ied-labs-india/fullstack-ai-cohort upon 100% verification.
+                </div>
+              </div>
+              <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Awaiting Steps 3-5</span>
+            </div>
+          </div>
+
+          {/* Right Column: Student Credential ID Card, Offer Letter, Orientation */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+            {/* Student Credential ID Pass */}
+            <div style={{ background: 'linear-gradient(135deg, #021a3b 0%, #03377A 100%)', color: '#ffffff', borderRadius: '12px', padding: '20px', boxShadow: '0 8px 24px rgba(2, 26, 59, 0.25)', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.15)', paddingBottom: '10px', marginBottom: '14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800, fontSize: '0.85rem', letterSpacing: '0.04em' }}>
+                  <span>🏛️</span> STUDENT CREDENTIAL
+                </div>
+                <span style={{ fontSize: '0.65rem', fontWeight: 700, background: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.4)', padding: '2px 6px', borderRadius: '4px' }}>
+                  PROVISIONAL
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', gap: '14px', alignItems: 'center', marginBottom: '14px' }}>
+                <div style={{ width: '64px', height: '64px', borderRadius: '8px', background: '#ffffff', color: '#022654', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '1.4rem', border: '2px solid rgba(255,255,255,0.4)', flexShrink: 0 }}>
+                  {userInitials}
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.68rem', color: '#93c5fd', textTransform: 'uppercase' }}>CANDIDATE NAME</div>
+                  <div style={{ fontWeight: 800, fontSize: '1rem', marginTop: '2px' }}>{user?.name || 'Aarav Sharma'}</div>
+                  <div style={{ fontSize: '0.72rem', color: '#bfdbfe', marginTop: '2px' }}>UID / SERIAL: {user?.rollNo || 'STU-2025-IN-9812'}</div>
+                  <div style={{ fontSize: '0.7rem', color: '#93c5fd', marginTop: '2px' }}>TRACK: Full Stack (AI/ML) '25</div>
+                </div>
+              </div>
+
+              <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: '8px', padding: '10px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <QrCode size={28} color="#93c5fd" />
+                  <div style={{ fontSize: '0.7rem', lineHeight: 1.2 }}>
+                    <div style={{ fontWeight: 700 }}>Campus Check-In Pass</div>
+                    <div style={{ color: '#93c5fd' }}>Syncs with biometric turnstile</div>
+                  </div>
+                </div>
+                <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#34d399', background: 'rgba(16, 185, 129, 0.2)', padding: '2px 6px', borderRadius: '4px' }}>• Active Gate</span>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', color: '#93c5fd', borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: '8px' }}>
+                <span>{user?.college || 'National Institute of Tech, Trichy'}</span>
+                <span>VALID THRU: 12/2025</span>
+              </div>
+            </div>
+
+            {/* Offer Letter Card */}
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '18px', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <div style={{ fontWeight: 800, fontSize: '0.88rem', color: '#0f172a' }}>
+                  Offer Letter #IED-OL-2025-4491
+                </div>
+                <span style={{ fontSize: '0.68rem', fontWeight: 700, background: '#fffbeb', color: '#b45309', padding: '2px 6px', borderRadius: '4px' }}>
+                  Pending Signature
+                </span>
+              </div>
+              <p style={{ margin: '0 0 14px', fontSize: '0.75rem', color: '#64748b', lineHeight: 1.4 }}>
+                Generated by Academic Board on July 02, 2025. Awaiting student NDA execution to release final counter-signed appointment letter.
+              </p>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button className="btn btn-ghost btn-sm" style={{ flex: 1, justifyContent: 'center' }} onClick={() => showToast('Offer letter draft opened in viewer', 'info')}>
+                  Preview Draft
+                </button>
+                <button className="btn btn-secondary btn-sm" onClick={() => showToast('Downloading offer letter PDF', 'info')}>
+                  <Download size={14} />
+                </button>
+              </div>
+            </div>
+
+            {/* Orientation Schedule Card */}
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '18px', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800, fontSize: '0.88rem', color: '#0f172a', marginBottom: '10px' }}>
+                <Calendar size={16} color="#03377A" /> Orientation Schedule
+              </div>
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '10px 12px', fontSize: '0.75rem', color: '#334155' }}>
+                <div style={{ fontWeight: 700, color: '#03377A' }}>Virtual Induction: July 15, 2025</div>
+                <div style={{ color: '#64748b', marginTop: '2px' }}>10:00 AM – 1:00 PM IST (Via Zoom / Google Meet Enterprise)</div>
+              </div>
+              <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '8px' }}>
+                🔗 Link will unlock 24 hours prior to session
+              </div>
+            </div>
+
+            {/* Academic Liaison Card */}
+            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px', fontSize: '0.75rem', color: '#475569' }}>
+              <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '6px' }}>ACADEMIC LIAISON (NIT TRICHY)</div>
+              <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.85rem' }}>Dr. K. Ramanathan, Ph.D.</div>
+              <div style={{ color: '#64748b' }}>Dean of Industry Relations & Placements</div>
+              <div style={{ color: '#03377A', marginTop: '2px', fontWeight: 600 }}>ramanathan@nitt.edu</div>
+              <div style={{ marginTop: '10px', borderTop: '1px solid #e2e8f0', paddingTop: '8px' }}>
+                <span style={{ color: '#03377A', fontWeight: 600, cursor: 'pointer' }} onClick={() => showToast('Support ticket dialog initiated', 'info')}>
+                  Need Verification Help? Open Ticket &rarr;
+                </span>
+              </div>
             </div>
           </div>
         </div>
-
-        {/* Document Uploads */}
-        <div className="glass-card" style={{ padding: '1.5rem', marginTop: '1.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h3 style={{ color: 'var(--text-primary)', margin: 0 }}>Document Uploads</h3>
-            <span style={{ fontSize: '.8rem', color: 'var(--text-muted)' }}>Supported formats: PDF, DOC, DOCX, PNG, JPG (Max 10MB)</span>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(240px,1fr))', gap: '1rem' }}>
-            {docItems.map((item) => {
-              const Icon = item.icon;
-              const docInfo = getDocDetails(docs, item.key);
-              const isBusy = uploadingDoc === item.key;
-              const isImage = item.key === 'photo' || (docInfo.path && /\.(jpg|jpeg|png|webp)$/i.test(docInfo.path));
-
-              return (
-                <div
-                  key={item.key}
-                  style={{
-                    padding: '1.25rem',
-                    background: docInfo.uploaded ? 'rgba(0,230,118,0.04)' : 'var(--bg-primary)',
-                    border: `1px solid ${docInfo.uploaded ? 'rgba(0,230,118,0.25)' : 'var(--border-color)'}`,
-                    borderRadius: '10px',
-                    textAlign: 'center',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    transition: 'all .2s ease'
-                  }}
-                >
-                  {isImage && docInfo.path ? (
-                    <img
-                      src={docInfo.path}
-                      alt={item.label}
-                      style={{
-                        width: '48px',
-                        height: '48px',
-                        borderRadius: '8px',
-                        objectFit: 'cover',
-                        marginBottom: '.5rem',
-                        border: '1px solid var(--border-color)'
-                      }}
-                    />
-                  ) : (
-                    <Icon size={32} style={{ color: docInfo.uploaded ? '#00e676' : 'var(--text-muted)', marginBottom: '.5rem' }} />
-                  )}
-
-                  <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '.25rem' }}>{item.label}</div>
-                  <div style={{ fontSize: '.75rem', fontWeight: 500, color: docInfo.uploaded ? '#00e676' : '#ff9100', marginBottom: '.75rem' }}>
-                    {docInfo.uploaded ? '✓ Uploaded' : 'Not uploaded'}
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-                    {docInfo.uploaded && docInfo.path && (
-                      <a
-                        href={docInfo.path}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn btn-sm btn-ghost"
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}
-                      >
-                        <ExternalLink size={13} /> View
-                      </a>
-                    )}
-
-                    <label
-                      className={`btn btn-sm ${docInfo.uploaded ? 'btn-secondary' : 'btn-primary'}`}
-                      style={{
-                        cursor: isBusy ? 'wait' : 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        opacity: isBusy ? 0.7 : 1
-                      }}
-                    >
-                      {isBusy ? (
-                        <>
-                          <RefreshCw size={13} className="spin" />
-                          <span>Uploading…</span>
-                        </>
-                      ) : (
-                        <>
-                          {docInfo.uploaded ? <RefreshCw size={13} /> : <Upload size={13} />}
-                          <span>{docInfo.uploaded ? 'Replace' : 'Upload'}</span>
-                        </>
-                      )}
-                      <input
-                        type="file"
-                        disabled={isBusy}
-                        accept={item.key === 'photo' ? 'image/*' : '.pdf,.doc,.docx,.png,.jpg,.jpeg'}
-                        style={{ display: 'none' }}
-                        onChange={(e) => handleUploadDoc(item.key, e)}
-                      />
-                    </label>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {internRecord.notes && (
-          <div className="glass-card" style={{ padding: '1.5rem', marginTop: '1.5rem' }}>
-            <h3 style={{ color: 'var(--text-primary)', marginBottom: '.75rem' }}>Notes from HR</h3>
-            <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>{internRecord.notes}</p>
-          </div>
-        )}
-      </>
+      </div>
     );
   }
 

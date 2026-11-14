@@ -79,6 +79,13 @@ export function AuthProvider({ children }) {
     localStorage.setItem('ied_user', JSON.stringify(u));
   }, []);
 
+  const setSession = useCallback((newToken, newUser) => {
+    setToken(newToken);
+    setUser(newUser);
+    localStorage.setItem('ied_token', newToken);
+    localStorage.setItem('ied_user', JSON.stringify(newUser));
+  }, []);
+
   const is = useCallback((...roles) => {
     const userRole = user?.role;
     return roles.includes(userRole) || (roles.includes('admin') && userRole === 'superadmin');
@@ -86,8 +93,8 @@ export function AuthProvider({ children }) {
 
   const value = useMemo(() => ({
     user, token, role, isAuthenticated,
-    login, register, logout, refreshUser, updateUser, is
-  }), [user, token, role, isAuthenticated, login, register, logout, refreshUser, updateUser, is]);
+    login, register, logout, refreshUser, updateUser, setSession, is
+  }), [user, token, role, isAuthenticated, login, register, logout, refreshUser, updateUser, setSession, is]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

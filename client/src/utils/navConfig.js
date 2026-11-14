@@ -23,6 +23,12 @@ export const ROLE_NAV = {
       { id: 'evaluation',    icon: 'star',             label: 'Evaluations' },
       { id: 'certificates',  icon: 'award',            label: 'Certificates' },
     ]},
+    { section: 'Finance', items: [
+      { id: 'pricing',              icon: 'settings',      label: 'Pricing & Fees' },
+      { id: 'payment-transactions', icon: 'credit-card',   label: 'Payments' },
+      { id: 'referral-partners',    icon: 'users',         label: 'Referral Partners' },
+      { id: 'payout-management',    icon: 'wallet',        label: 'Payouts' },
+    ]},
   ],
   hr: [
     { section: 'Main', items: [
@@ -77,6 +83,17 @@ export const ROLE_NAV = {
       { id: 'refer-intern',  icon: 'user-plus',        label: 'Refer an Intern' },
       { id: 'my-referrals',  icon: 'clipboard-list',   label: 'My Referrals' },
     ]},
+  ],
+  referral_partner: [
+    { section: 'Main', items: [
+      { id: 'dashboard',        icon: 'layout-dashboard', label: 'Dashboard' },
+    ]},
+    { section: 'Referrals', items: [
+      { id: 'rp-referrals',     icon: 'users',           label: 'My Referrals' },
+    ]},
+    { section: 'Payouts', items: [
+      { id: 'rp-payouts',       icon: 'wallet',          label: 'Payouts & Commissions' },
+    ]},
   ]
 };
 
@@ -87,4 +104,7 @@ export const MODULE_TITLES = {
   interviews: 'Interviews', onboarding: 'Onboarding',
   attendance: 'Attendance', tasks: 'Tasks', leaves: 'Leave Management',
   communication: 'Messages', evaluation: 'Evaluations', certificates: 'Certificates',
+  pricing: 'Pricing & Fees', 'payment-transactions': 'Payment Transactions',
+  'referral-partners': 'Referral Partners', 'payout-management': 'Payout Management',
+  'rp-referrals': 'My Referrals', 'rp-payouts': 'Payouts & Commissions',
 };

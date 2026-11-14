@@ -30,6 +30,9 @@ const applicationSchema = new mongoose.Schema({
     status:    { type: String, enum: ['pending', 'paid', 'failed'], default: 'paid' },
     paidAt:    { type: Date }
   },
+  referralCode:      { type: String, default: '' },
+  referralPartnerId: { type: mongoose.Schema.Types.ObjectId, ref: 'ReferralPartner' },
+  commissionId:      { type: mongoose.Schema.Types.ObjectId, ref: 'Commission' },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Application', applicationSchema);

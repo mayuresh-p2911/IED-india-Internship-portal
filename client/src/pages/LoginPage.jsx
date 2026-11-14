@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { ChevronLeft, Mail, Lock, Eye, EyeOff, ArrowRight, Check } from 'lucide-react';
 
-export function LoginPage({ onLoginSuccess, onGoToSignup, onGoToApply, onGoToHome }) {
+export function LoginPage({ onLoginSuccess, onGoToSignup, onGoToApply, onGoToHome, onGoToReferralLogin }) {
   const { login } = useAuth();
 
   const [email, setEmail] = useState('');
@@ -199,6 +199,11 @@ export function LoginPage({ onLoginSuccess, onGoToSignup, onGoToApply, onGoToHom
           <p className="apply-link">
             <a href="#" id="show-apply" onClick={(e) => { e.preventDefault(); onGoToApply(); }}>
               Apply for Internship
+            </a>
+          </p>
+          <p className="apply-link" style={{ marginTop: '4px' }}>
+            <a href="#" onClick={(e) => { e.preventDefault(); onGoToReferralLogin?.(); }} style={{ color: '#03377A', fontSize: '0.85rem' }}>
+              Are you a Referral Partner? Login here
             </a>
           </p>
         </div>

@@ -26,6 +26,19 @@ import ReferIntern from './pages/ReferIntern';
 import MyReferrals from './pages/MyReferrals';
 import InternReferrals from './pages/InternReferrals';
 
+// New: Admin Finance Pages
+import PricingManagement from './pages/PricingManagement';
+import PaymentTransactions from './pages/PaymentTransactions';
+import ReferralPartnerManagement from './pages/ReferralPartnerManagement';
+import PayoutManagement from './pages/PayoutManagement';
+
+// New: Referral Partner Portal Pages
+import ReferralLoginPage from './pages/ReferralPortal/ReferralLoginPage';
+import ReferralSignupPage from './pages/ReferralPortal/ReferralSignupPage';
+import ReferralPortalDashboard from './pages/ReferralPortal/ReferralPortalDashboard';
+import ReferralPortalReferrals from './pages/ReferralPortal/ReferralPortalReferrals';
+import ReferralPortalPayouts from './pages/ReferralPortal/ReferralPortalPayouts';
+
 // Styles
 import './tailwind.css';
 import './css/main.css';
@@ -193,6 +206,9 @@ function AppContent() {
   const renderModuleContent = () => {
     switch (currentModule) {
       case 'dashboard':
+        if (user?.role === 'referral_partner') {
+          return <ReferralPortalDashboard onNavigate={setCurrentModule} />;
+        }
         return <Dashboard onNavigate={setCurrentModule} />;
       case 'analytics':
         return <Analytics />;
@@ -222,14 +238,51 @@ function AppContent() {
         return <MyReferrals onNavigate={setCurrentModule} />;
       case 'intern-referrals':
         return <InternReferrals />;
+      // Admin Finance
+      case 'pricing':
+        return <PricingManagement />;
+      case 'payment-transactions':
+        return <PaymentTransactions />;
+      case 'referral-partners':
+        return <ReferralPartnerManagement />;
+      case 'payout-management':
+        return <PayoutManagement />;
+      // Referral Partner Portal
+      case 'rp-referrals':
+        return <ReferralPortalReferrals />;
+      case 'rp-payouts':
+        return <ReferralPortalPayouts />;
       default:
+        if (user?.role === 'referral_partner') {
+          return <ReferralPortalDashboard onNavigate={setCurrentModule} />;
+        }
         return <Dashboard onNavigate={setCurrentModule} />;
     }
   };
 
   // ── Render Pages ──
   if (page === 'landing') {
-    return <LandingPage onGoToLogin={() => setPage('login')} />;
+    return <LandingPage onGoToLogin={() => setPage('login')} onGoToReferralLogin={() => setPage('referral-login')} />;
+  }
+
+  if (page === 'referral-login') {
+    return (
+      <ReferralLoginPage
+        onLoginSuccess={() => setPage('dashboard')}
+        onGoToSignup={() => setPage('referral-signup')}
+        onGoToHome={() => setPage('landing')}
+      />
+    );
+  }
+
+  if (page === 'referral-signup') {
+    return (
+      <ReferralSignupPage
+        onSignupSuccess={() => setPage('dashboard')}
+        onGoToLogin={() => setPage('referral-login')}
+        onGoToHome={() => setPage('landing')}
+      />
+    );
   }
 
   if (page === 'login') {
@@ -239,6 +292,7 @@ function AppContent() {
         onGoToSignup={() => setPage('signup')}
         onGoToApply={() => setPage('apply')}
         onGoToHome={() => setPage('landing')}
+        onGoToReferralLogin={() => setPage('referral-login')}
       />
     );
   }
